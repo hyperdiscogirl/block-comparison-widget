@@ -1,4 +1,4 @@
-import { motion, useMotionValue, AnimatePresence, PanInfo } from 'framer-motion'
+import { useMotionValue, AnimatePresence, PanInfo } from 'framer-motion'
 import { useEffect } from 'react'
 import { Block as BlockComponent } from '../Block'
 import type { BlockStack as BlockStackType } from '../BlockComparisonWidget/types'
