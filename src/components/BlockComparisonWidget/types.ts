@@ -1,12 +1,5 @@
 export type InteractionMode = 'addRemove' | 'drawCompare';
 
-export interface BlockStack {
-  id: number;
-  blocks: number;
-  value: number;
-  mode: 'input' | 'label';
-}
-
 export interface Point {
   x: number;
   y: number;
@@ -18,3 +11,16 @@ export interface ComparisonLine {
   endStack: number;
   position: 'top' | 'bottom';
 }
+
+export interface Block {
+    id: string;
+    position: number;
+  }
+  
+export interface BlockStack {
+id: number;
+blocks: Block[]; 
+value: number;
+mode: 'input' | 'label';
+}
+  
