@@ -1,4 +1,4 @@
-import { useMemo, forwardRef, useState } from 'react';
+import { useMemo, forwardRef, useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 
 interface BlockProps {
@@ -9,37 +9,38 @@ interface BlockProps {
   draggable?: boolean;
   onDragEnd?: (event: any, info: any) => void;
   dragThreshold?: number;
+  size?: 'sm' | 'lg';
+  mode: 'addRemove' | 'drawCompare';
 }
 
 export const Block = forwardRef<HTMLDivElement, BlockProps>(({
   index,
   totalBlocks,
-  screenWidth = window.innerWidth,
-  screenHeight = window.innerHeight,
   draggable = false,
   onDragEnd,
-  dragThreshold = 100
+  dragThreshold = 100,
+  size = 'lg',
+  mode
 }, ref) => {
-  // calculate base size based on screen dimensions
-  const size = useMemo(() => {
-    const smallerDimension = Math.min(screenWidth, screenHeight);
-    return Math.floor(smallerDimension * 0.07); 
-  }, [screenWidth, screenHeight]);
+  const [shouldShimmer, setShouldShimmer] = useState(false);
 
-  // ok no fuck this but i might make it configurable later
-  // // adjust size based on number of blocks
-  // const size = useMemo(() => {
-  //   if (maxBlocks <= 5) {
-  //     return Math.floor(baseSize * 2);
-  //   }
-  //   return baseSize;
-  // }, [baseSize, maxBlocks]);
+  // trigger shimmer animation when mode or size changes
+  // this needs some work doesnt quite do what i want - only trigeers on new cube creation 
+  useEffect(() => {
+    setShouldShimmer(true);
+    const timer = setTimeout(() => setShouldShimmer(false), 500);
+    return () => clearTimeout(timer);
+  }, [mode, size]);
 
-  const faceSize = Math.floor(size * 0.8);
+  // fixed sizes instead of calculations
+  const blockSize = useMemo(() => {
+    return size === 'sm' ? 40 : 60;
+  }, [size]);
+
+  const faceSize = Math.floor(blockSize * 0.8);
 
   // container offset to center the cube
-  // tbh not sure where this came from lol 
-  const containerOffset = size * 0.5;
+  const containerOffset = blockSize * 0.5;
 
   const topTransform = `rotate(210deg) skew(-30deg) translate(${faceSize * 0.42}px, ${faceSize * 0.26}px) scaleY(0.864)`;
   const frontTransform = `rotate(-30deg) skewX(-30deg) translate(${faceSize * 0.375}px, ${faceSize * 0.5}px) scaleY(0.864)`;
@@ -56,11 +57,27 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
       className="flex items-center justify-center"
       style={{
         zIndex: totalBlocks - index,
-        marginBottom: `${size * (spacingMultiplier - 1)}px`
+        marginBottom: `${blockSize * (spacingMultiplier - 1)}px`
       }}
       exit={{ opacity: 0, scale: 0.8, zIndex: totalBlocks - index - 1}}
       initial={{ opacity: 0, scale: 0.8 }}
-      animate={{ opacity: 1, scale: 1 }}
+      animate={{ 
+        opacity: 1, 
+        scale: 1,
+        y: [0, -4, 0], // subtle float up and down,
+        filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"]
+      }}
+      transition={{
+        y: {
+          duration: 2,
+          repeat: Infinity,
+        },
+        filter: {
+          duration: 0.5,
+          delay: index * 0.05,
+          ease: "easeInOut"
+        }
+      }}
       drag={draggable}
       dragSnapToOrigin={!willDelete}
       onDragStart={() => setWillDelete(false)}
@@ -79,8 +96,8 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
       <div 
         className="relative"
         style={{ 
-          width: `${size}px`, 
-          height: `${size}px`,
+          width: `${blockSize}px`, 
+          height: `${blockSize}px`,
           transform: `translateX(${containerOffset * 0.4}px)` // adjust horizontal position
         }}
       >

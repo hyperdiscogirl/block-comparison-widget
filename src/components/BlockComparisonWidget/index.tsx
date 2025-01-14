@@ -37,6 +37,7 @@ export function BlockComparisonWidget() {
    }
  ]);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('addRemove')
+  const [blockSize, setBlockSize] = useState<'sm' | 'lg'>('sm');
 
   const handleStackClick = (stackId: number) => {
     if (interactionMode === 'addRemove') {
@@ -77,29 +78,31 @@ export function BlockComparisonWidget() {
   }
 
   return (
-    <div className="w-full max-w-2xl flex justify-evenly">
-      <div className="bg-slate-800 rounded-lg shadow-xl p-6 h-[90vh]">
-        <div className="flex justify-between h-full px-12">
+    <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 overflow-hidden">
+      <div className="bg-slate-800 rounded-xl shadow-xl p-4 md:p-6 h-[60vh] md:h-[85vh] w-full">
+        <div className="flex h-full justify-around px-4">
           {stacks.map(stack => (
             <BlockStack
               key={stack.id}
               stack={stack}
               onStackClick={() => handleStackClick(stack.id)}
               onStackUpdate={(removeIndex) => handleStackUpdate(stack.id, removeIndex)}
+              mode={interactionMode}
+              blockSize={blockSize}
             />
           ))}
         </div>
       </div>
-      <div className="flex justify-between items-center">
-        <ControlPanel 
-          stacks={stacks}
-          setStacks={setStacks}
-          mode={interactionMode}
-          setMode={setInteractionMode}
-          blockIdCounter={blockIdCounter}
-          setBlockIdCounter={setBlockIdCounter}
-        />
-      </div>
+      <ControlPanel 
+        stacks={stacks}
+        setStacks={setStacks}
+        mode={interactionMode}
+        setMode={setInteractionMode}
+        blockSize={blockSize}
+        setBlockSize={setBlockSize}
+        blockIdCounter={blockIdCounter}
+        setBlockIdCounter={setBlockIdCounter}
+      />
     </div>
   )
 }

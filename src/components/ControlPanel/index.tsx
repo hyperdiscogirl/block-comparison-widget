@@ -1,5 +1,6 @@
 import type { BlockStack } from '../BlockComparisonWidget/types'
-import { PlusIcon, MinusIcon } from 'lucide-react'
+import { PlusIcon, MinusIcon, WrenchIcon } from 'lucide-react'
+import { AnimatePresence, motion } from 'framer-motion'
 
 type ControlPanelProps = {
   stacks: BlockStack[]
@@ -8,6 +9,8 @@ type ControlPanelProps = {
   setMode: (mode: 'addRemove' | 'drawCompare') => void
   blockIdCounter: number              
   setBlockIdCounter: (value: number | ((prev: number) => number)) => void
+  blockSize: 'sm' | 'lg'
+  setBlockSize: (size: 'sm' | 'lg') => void
 }
 
 export function ControlPanel({ 
@@ -16,7 +19,9 @@ export function ControlPanel({
   mode, 
   setMode,
   blockIdCounter,
-  setBlockIdCounter 
+  setBlockIdCounter,
+  blockSize,
+  setBlockSize
 }: ControlPanelProps) {
 const handleSelectChange = (index: number, value: number) => {
     const startingId = blockIdCounter;
@@ -68,21 +73,23 @@ const handleSelectChange = (index: number, value: number) => {
   }
 
   return (
-    <div className="bg-slate-800 rounded-lg shadow-xl text-indigo-100 text-center text-4xl font-bold p-6 h-[90vh] flex flex-col justify-center gap-8">
-      <h2 className="font-bold font-mono text-center text-indigo-100">Control Panel</h2>
-      <div className="flex gap-5 text-blue-400">
+    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100 text-center text-2xl md:text-3xl font-bold p-4 md:p-6 lg:p-12 h-[60vh] md:h-[85vh] w-full md:w-[45%] flex flex-col justify-center gap-4 md:gap-6 overflow-y-auto">
+      <h2 className="font-bold font-mono text-center text-indigo-100 flex items-center justify-center gap-2">
+        Control Panel<WrenchIcon />
+      </h2>
+      <div className="flex justify-center gap-5 text-blue-400">
         {stacks.map((stack, index) => (
-          <div key={stack.id} className="flex flex-col gap-4">
+          <div key={stack.id} className="flex flex-col items-center gap-4">
             <select 
               value={stack.blocks.length} 
               onChange={(e) => handleSelectChange(index, parseInt(e.target.value))}
-              className="bg-slate-700 text-white p-2 rounded-md text-center"
+              className="bg-slate-700 text-white p-2 rounded-md text-center w-20"
             >
               {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
                 <option key={num} value={num}>{num}</option>
               ))}
             </select>
-            <div className="flex gap-1">
+            <div className="flex justify-center gap-1">
               <button 
                 onClick={() => updateBlocks(index, true)} 
                 disabled={stack.blocks.length >= 10}
@@ -101,8 +108,31 @@ const handleSelectChange = (index: number, value: number) => {
           </div>
         ))}
       </div>
+      <div className="text-3xl font-mono">
+        <h3 className="mb-4">Block Size</h3>
+        <div className="flex flex-col gap-2 justify-center text-lg md:text-2xl">
+          <label className="flex items-center gap-2">
+            <input 
+              type="radio" 
+              value="sm" 
+              checked={blockSize === 'sm'} 
+              onChange={() => setBlockSize('sm')}
+            />
+            Small
+          </label>
+          <label className="flex items-center gap-2">
+            <input 
+              type="radio" 
+              value="lg" 
+              checked={blockSize === 'lg'} 
+              onChange={() => setBlockSize('lg')}
+            />
+            Large
+          </label>
+        </div>
+      </div>
       
-      <div className="text-3xl font-mono"> 
+      <div className="text-3xl font-mono text-center"> 
         <h3 className="mb-4">Mode</h3>
         <div className="flex flex-col gap-2 justify-center text-2xl">
           <label className="flex items-center gap-2">
@@ -124,11 +154,31 @@ const handleSelectChange = (index: number, value: number) => {
             Draw/Compare
           </label>
         </div>
-        <div className="mt-8">
-          {mode === 'addRemove' && 
-           <p className="text-sm">Double click the stack to add a block, drag the top block to remove</p>}
-          {mode === 'drawCompare' && 
-           <p className="text-sm">Click and drag from the top of one stack to the other to create a comparison line</p>}
+        <div className="mt-8 text-center text-xl md:text-2xl h-20">
+          <AnimatePresence mode="wait">
+            {mode === 'addRemove' && (
+              <motion.p
+                key="addRemove"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.4 }}
+              >
+                Double click the stack to add a block, drag the top block to remove
+              </motion.p>
+            )}
+            {mode === 'drawCompare' && (
+              <motion.p
+                key="drawCompare"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.4 }}
+              >
+                Click and drag from the top of one stack to the other to create a comparison line
+              </motion.p>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
