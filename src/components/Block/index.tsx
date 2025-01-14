@@ -25,7 +25,6 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
   const [shouldShimmer, setShouldShimmer] = useState(false);
 
   // trigger shimmer animation when mode or size changes
-  // this needs some work doesnt quite do what i want - only trigeers on new cube creation 
   useEffect(() => {
     setShouldShimmer(true);
     const timer = setTimeout(() => setShouldShimmer(false), 500);
@@ -64,8 +63,10 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
       animate={{ 
         opacity: 1, 
         scale: 1,
-        y: [0, -4, 0], // subtle float up and down,
-        filter: ["brightness(1)", "brightness(1.5)", "brightness(1)"]
+        y: [0, -4, 0], // subtle float up and down
+        filter: shouldShimmer 
+          ? ["brightness(1)", "brightness(1.5)", "brightness(1)"] 
+          : "brightness(1)"
       }}
       transition={{
         y: {
@@ -73,7 +74,7 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
           repeat: Infinity,
         },
         filter: {
-          duration: 0.5,
+          duration: 0.4,
           delay: index * 0.05,
           ease: "easeInOut"
         }
