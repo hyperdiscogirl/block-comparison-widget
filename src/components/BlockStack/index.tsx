@@ -1,4 +1,5 @@
-import { AnimatePresence, PanInfo } from 'framer-motion'
+import { motion, useMotionValue, AnimatePresence, PanInfo } from 'framer-motion'
+import { useEffect } from 'react'
 import { Block as BlockComponent } from '../Block'
 import type { BlockStack as BlockStackType } from '../BlockComparisonWidget/types'
 
@@ -8,9 +9,28 @@ interface BlockStackProps {
   onStackUpdate?: (removeIndex: number) => void;
   mode: 'addRemove' | 'drawCompare';
   blockSize: 'sm' | 'lg';
+  floatMode: 'synced' | 'staggered' | 'off';
+  shimmerEnabled: boolean;
 }
 
-export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize }: BlockStackProps) {
+export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize, floatMode, shimmerEnabled }: BlockStackProps) {
+  // create a shared motion value to sync animation
+  const floatProgress = useMotionValue(0)
+  
+  // start the animation cycle when component mounts
+  useEffect(() => {
+    if (floatMode === 'off') return;
+    
+    const animate = () => {
+      const time = (Date.now() / 2000) % 1
+      floatProgress.set(time)
+      requestAnimationFrame(animate)
+    }
+    
+    const animation = requestAnimationFrame(animate)
+    return () => cancelAnimationFrame(animation)
+  }, [floatMode])
+
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, index: number) => {
     const distanceMoved = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
     const deleteThreshold = 100;
@@ -36,6 +56,9 @@ export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize
               onDragEnd={(event, info) => handleDragEnd(event, info, index)}
               size={blockSize}
               mode={mode}
+              floatMode={floatMode}
+              shimmerEnabled={shimmerEnabled}
+              floatProgress={floatProgress}
             />
           ))}
         </AnimatePresence>

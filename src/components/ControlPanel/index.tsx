@@ -11,6 +11,10 @@ type ControlPanelProps = {
   setBlockIdCounter: (value: number | ((prev: number) => number)) => void
   blockSize: 'sm' | 'lg'
   setBlockSize: (size: 'sm' | 'lg') => void
+  floatMode: 'synced' | 'staggered' | 'off'
+  setFloatMode: (mode: 'synced' | 'staggered' | 'off') => void
+  shimmerEnabled: boolean
+  setShimmerEnabled: (enabled: boolean) => void
 }
 
 export function ControlPanel({ 
@@ -21,7 +25,11 @@ export function ControlPanel({
   blockIdCounter,
   setBlockIdCounter,
   blockSize,
-  setBlockSize
+  setBlockSize,
+  floatMode,
+  setFloatMode,
+  shimmerEnabled,
+  setShimmerEnabled
 }: ControlPanelProps) {
 const handleSelectChange = (index: number, value: number) => {
     const startingId = blockIdCounter;
@@ -73,11 +81,11 @@ const handleSelectChange = (index: number, value: number) => {
   }
 
   return (
-    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100 text-center text-2xl md:text-3xl font-bold p-4 md:p-6 lg:p-12 h-[60vh] md:h-[85vh] w-full md:w-[45%] flex flex-col justify-center gap-4 md:gap-6 overflow-y-auto">
+    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100  text-2xl md:text-3xl p-4 md:p-6 lg:p-12 h-[60vh] md:h-[85vh] w-full md:w-[45%] flex flex-col justify-center items-center gap-4 md:gap-6 overflow-y-auto">
       <h2 className="font-bold font-mono text-center text-indigo-100 flex items-center justify-center gap-2">
         Control Panel<WrenchIcon />
       </h2>
-      <div className="flex justify-center gap-5 text-blue-400">
+      <div className="flex min-w-fit justify-center gap-5 text-blue-400">
         {stacks.map((stack, index) => (
           <div key={stack.id} className="flex flex-col items-center gap-4">
             <select 
@@ -95,65 +103,128 @@ const handleSelectChange = (index: number, value: number) => {
                 disabled={stack.blocks.length >= 10}
                 className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50"
               >
-                <PlusIcon />
+                <PlusIcon className="w-8 h-8" />
               </button>
               <button 
                 onClick={() => updateBlocks(index, false)} 
                 disabled={stack.blocks.length <= 1}
                 className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50"
               >
-                <MinusIcon />
+                <MinusIcon className="w-8 h-8" />
               </button>
             </div>
           </div>
         ))}
       </div>
-      <div className="text-3xl font-mono">
-        <h3 className="mb-4">Block Size</h3>
-        <div className="flex flex-col gap-2 justify-center text-lg md:text-2xl">
-          <label className="flex items-center gap-2">
-            <input 
-              type="radio" 
-              value="sm" 
-              checked={blockSize === 'sm'} 
-              onChange={() => setBlockSize('sm')}
-            />
-            Small
-          </label>
-          <label className="flex items-center gap-2">
-            <input 
-              type="radio" 
-              value="lg" 
-              checked={blockSize === 'lg'} 
-              onChange={() => setBlockSize('lg')}
-            />
-            Large
-          </label>
+      <div className="text-3xl min-w-fit font-mono">
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-y-4">
+          <h3 className="col-span-3 text-center ">Block Settings</h3>
+          
+          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+            <h4>Mode</h4>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="addRemove" 
+                checked={mode === 'addRemove'} 
+                onChange={() => setMode('addRemove')}
+              />
+              Add/Remove
+            </label>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="drawCompare" 
+                checked={mode === 'drawCompare'} 
+                onChange={() => setMode('drawCompare')}
+              />
+              Draw/Compare
+            </label>
+          </div>
+
+          <div className="w-8" />
+
+          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+            <h4>Size</h4>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="sm" 
+                checked={blockSize === 'sm'} 
+                onChange={() => setBlockSize('sm')}
+              />
+              Small
+            </label>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="lg" 
+                checked={blockSize === 'lg'} 
+                onChange={() => setBlockSize('lg')}
+              />
+              Large
+            </label>
+          </div>
+
+          <h3 className="col-span-3 text-center mt-2">Animations</h3>
+
+          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+            <h4>Float</h4>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="synced"
+                checked={floatMode === 'synced'} 
+                onChange={() => setFloatMode('synced')}
+              />
+              Synced
+            </label>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="staggered"
+                checked={floatMode === 'staggered'} 
+                onChange={() => setFloatMode('staggered')}
+              />
+              Staggered
+            </label>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="off"
+                checked={floatMode === 'off'} 
+                onChange={() => setFloatMode('off')}
+              />
+              Off
+            </label>
+          </div>
+
+          <div className="w-8" />
+
+          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+            <h4>Shimmer</h4>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="on"
+                checked={shimmerEnabled} 
+                onChange={() => setShimmerEnabled(true)}
+              />
+              On
+            </label>
+            <label className="flex items-center gap-2">
+              <input 
+                type="radio" 
+                value="off"
+                checked={!shimmerEnabled} 
+                onChange={() => setShimmerEnabled(false)}
+              />
+              Off
+            </label>
+          </div>
         </div>
       </div>
       
-      <div className="text-3xl font-mono text-center"> 
-        <h3 className="mb-4">Mode</h3>
-        <div className="flex flex-col gap-2 justify-center text-2xl">
-          <label className="flex items-center gap-2">
-            <input 
-              type="radio" 
-              value="addRemove" 
-              checked={mode === 'addRemove'} 
-              onChange={() => setMode('addRemove')}
-            />
-            Add/Remove
-          </label>
-          <label className="flex items-center gap-2">
-            <input 
-              type="radio" 
-              value="drawCompare" 
-              checked={mode === 'drawCompare'} 
-              onChange={() => setMode('drawCompare')}
-            />
-            Draw/Compare
-          </label>
-        </div>
         <div className="mt-8 text-center text-xl md:text-2xl h-20">
           <AnimatePresence mode="wait">
             {mode === 'addRemove' && (
@@ -180,7 +251,6 @@ const handleSelectChange = (index: number, value: number) => {
             )}
           </AnimatePresence>
         </div>
-      </div>
     </div>
   )
 }

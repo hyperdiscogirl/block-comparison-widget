@@ -1,5 +1,5 @@
 import { useMemo, forwardRef, useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, MotionValue, useTransform, useMotionValue } from 'framer-motion';
 
 interface BlockProps {
   index: number;
@@ -11,6 +11,9 @@ interface BlockProps {
   dragThreshold?: number;
   size?: 'sm' | 'lg';
   mode: 'addRemove' | 'drawCompare';
+  floatProgress: MotionValue<number>;
+  floatMode: 'synced' | 'staggered' | 'off';
+  shimmerEnabled: boolean;
 }
 
 export const Block = forwardRef<HTMLDivElement, BlockProps>(({
@@ -20,35 +23,64 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
   onDragEnd,
   dragThreshold = 100,
   size = 'lg',
-  mode
+  mode,
+  floatProgress,
+  floatMode,
+  shimmerEnabled
 }, ref) => {
   const [shouldShimmer, setShouldShimmer] = useState(false);
+  const [willDelete, setWillDelete] = useState(false);
 
-  // trigger shimmer animation when mode or size changes
+  // shimmer effect on mode/size changes
   useEffect(() => {
+    if (!shimmerEnabled) return;
     setShouldShimmer(true);
     const timer = setTimeout(() => setShouldShimmer(false), 500);
     return () => clearTimeout(timer);
-  }, [mode, size]);
+  }, [mode, size, shimmerEnabled]);
 
-  // fixed sizes instead of calculations
+  // staggered animation effect
+  const offsetProgress = useMotionValue(0)
+  
+  useEffect(() => {
+    if (floatMode === 'off') return;
+
+    const unsubscribe = floatProgress.on('change', (latest) => {
+      const offset = floatMode === 'staggered'
+        ? (latest + (index * 0.2)) % 1  // staggered effect
+        : latest                         // synced effect
+      offsetProgress.set(offset)
+    })
+    return unsubscribe
+  }, [floatProgress, index, floatMode])
+
+  // scale the float distance based on both size and mode
+  const floatDistance = useMemo(() => {
+    const baseDistance = size === 'sm' ? -2 : -4;
+    return floatMode === 'staggered' 
+      ? baseDistance * 0.6  
+      : baseDistance;        
+  }, [size, floatMode]);
+
+  const y = useTransform(
+    offsetProgress, 
+    [0, 0.5, 1], 
+    floatMode === 'off' ? [0, 0, 0] : [0, floatDistance, 0]
+  )
+
+  // block sizing 
   const blockSize = useMemo(() => {
     return size === 'sm' ? 40 : 60;
   }, [size]);
 
   const faceSize = Math.floor(blockSize * 0.8);
-
-  // container offset to center the cube
   const containerOffset = blockSize * 0.5;
+  const spacingMultiplier = 1.1;
 
+  // isometric transforms
   const topTransform = `rotate(210deg) skew(-30deg) translate(${faceSize * 0.42}px, ${faceSize * 0.26}px) scaleY(0.864)`;
   const frontTransform = `rotate(-30deg) skewX(-30deg) translate(${faceSize * 0.375}px, ${faceSize * 0.5}px) scaleY(0.864)`;
   const sideTransform = `rotate(90deg) skewX(-30deg) scaleY(0.864) translate(${faceSize * 0.7}px, ${faceSize * 0.625}px)`;
-
-  // increasing adds more space between blocks
-  const spacingMultiplier = 1.1; 
-
-  const [willDelete, setWillDelete] = useState(false);
 
   return (
     <motion.div
@@ -56,23 +88,19 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
       className="flex items-center justify-center"
       style={{
         zIndex: totalBlocks - index,
-        marginBottom: `${blockSize * (spacingMultiplier - 1)}px`
+        marginBottom: `${blockSize * (spacingMultiplier - 1)}px`,
+        y
       }}
       exit={{ opacity: 0, scale: 0.8, zIndex: totalBlocks - index - 1}}
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ 
         opacity: 1, 
         scale: 1,
-        y: [0, -4, 0], // subtle float up and down
         filter: shouldShimmer 
           ? ["brightness(1)", "brightness(1.5)", "brightness(1)"] 
           : "brightness(1)"
       }}
       transition={{
-        y: {
-          duration: 2,
-          repeat: Infinity,
-        },
         filter: {
           duration: 0.4,
           delay: index * 0.05,
@@ -99,7 +127,7 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
         style={{ 
           width: `${blockSize}px`, 
           height: `${blockSize}px`,
-          transform: `translateX(${containerOffset * 0.4}px)` // adjust horizontal position
+          transform: `translateX(${containerOffset * 0.4}px)`
         }}
       >
         <div 

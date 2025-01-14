@@ -38,6 +38,8 @@ export function BlockComparisonWidget() {
  ]);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('addRemove')
   const [blockSize, setBlockSize] = useState<'sm' | 'lg'>('sm');
+  const [floatMode, setFloatMode] = useState<'synced' | 'staggered' | 'off'>('synced');
+  const [shimmerEnabled, setShimmerEnabled] = useState(true);
 
   const handleStackClick = (stackId: number) => {
     if (interactionMode === 'addRemove') {
@@ -89,6 +91,8 @@ export function BlockComparisonWidget() {
               onStackUpdate={(removeIndex) => handleStackUpdate(stack.id, removeIndex)}
               mode={interactionMode}
               blockSize={blockSize}
+              floatMode={floatMode}
+              shimmerEnabled={shimmerEnabled}
             />
           ))}
         </div>
@@ -102,6 +106,10 @@ export function BlockComparisonWidget() {
         setBlockSize={setBlockSize}
         blockIdCounter={blockIdCounter}
         setBlockIdCounter={setBlockIdCounter}
+        floatMode={floatMode}
+        setFloatMode={setFloatMode}
+        shimmerEnabled={shimmerEnabled}
+        setShimmerEnabled={setShimmerEnabled}
       />
     </div>
   )
