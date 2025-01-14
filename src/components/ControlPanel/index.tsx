@@ -81,8 +81,8 @@ const handleSelectChange = (index: number, value: number) => {
   }
 
   return (
-    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100  text-2xl md:text-3xl p-4 md:p-6 lg:p-12 h-[60vh] md:h-[85vh] w-full md:w-[45%] flex flex-col justify-center items-center gap-4 md:gap-6 overflow-y-auto">
-      <h2 className="font-bold font-mono text-center text-indigo-100 flex items-center justify-center gap-2">
+    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100 text-xl lg:text-2xl p-4 md:p-6 lg:p-12 md:h-[85vh] w-full min-h-fit lg:min-h-0 md:w-[45%] flex flex-col justify-center items-center gap-4 md:gap-6 overflow-y-auto">
+      <h2 className="font-bold font-mono text-center text-indigo-100 flex items-center justify-center gap-2 text-2xl lg:text-3xl">
         Control Panel<WrenchIcon />
       </h2>
       <div className="flex min-w-fit justify-center gap-5 text-blue-400">
@@ -116,11 +116,11 @@ const handleSelectChange = (index: number, value: number) => {
           </div>
         ))}
       </div>
-      <div className="text-3xl min-w-fit font-mono">
+      <div className="text-2xl lg:text-2xl min-w-fit font-mono">
         <div className="grid grid-cols-[1fr_auto_1fr] gap-y-4">
-          <h3 className="col-span-3 text-center ">Block Settings</h3>
+          <h3 className="col-span-3 text-center">Block Settings</h3>
           
-          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+          <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Mode</h4>
             <label className="flex items-center gap-2">
               <input 
@@ -144,7 +144,7 @@ const handleSelectChange = (index: number, value: number) => {
 
           <div className="w-8" />
 
-          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+          <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Size</h4>
             <label className="flex items-center gap-2">
               <input 
@@ -168,7 +168,7 @@ const handleSelectChange = (index: number, value: number) => {
 
           <h3 className="col-span-3 text-center mt-2">Animations</h3>
 
-          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+          <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Float</h4>
             <label className="flex items-center gap-2">
               <input 
@@ -201,7 +201,7 @@ const handleSelectChange = (index: number, value: number) => {
 
           <div className="w-8" />
 
-          <div className="flex flex-col gap-2 text-lg md:text-2xl">
+          <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Shimmer</h4>
             <label className="flex items-center gap-2">
               <input 
@@ -225,7 +225,7 @@ const handleSelectChange = (index: number, value: number) => {
         </div>
       </div>
       
-        <div className="mt-8 text-center text-xl md:text-2xl h-20">
+        <div className="mt-8 text-center text-lg lg:text-xl h-20">
           <AnimatePresence mode="wait">
             {mode === 'addRemove' && (
               <motion.p
