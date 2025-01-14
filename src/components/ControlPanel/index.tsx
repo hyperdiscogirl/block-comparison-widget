@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import type { BlockStack } from '../BlockComparisonWidget/types'
 
 type ControlPanelProps = {
