@@ -1,6 +1,6 @@
 Block comparison widget made with ReactTS and Framer Motion for Synthesis (◡‿◡✿) 
 
-Live deploy here: https://disco-block-compare.netlify.app/
+Live deploy here: https://disco-stack-compare.netlify.app/
 
 A few small notes on where I deviated from the spec: 
 
