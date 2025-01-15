@@ -62,7 +62,8 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
       : baseDistance;        
   }, [size, floatMode]);
 
-  const y = useTransform(
+  const dragY = useMotionValue(0)
+  const floatY = useTransform(
     offsetProgress, 
     [0, 0.5, 1], 
     floatMode === 'off' ? [0, 0, 0] : [0, floatDistance, 0]
@@ -89,7 +90,8 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
       style={{
         zIndex: totalBlocks - index,
         marginBottom: `${blockSize * (spacingMultiplier - 1)}px`,
-        y
+        y: dragY,
+        translateY: floatY
       }}
       exit={{ opacity: 0, scale: 0.8, zIndex: totalBlocks - index - 1}}
       initial={{ opacity: 0, scale: 0.8 }}
