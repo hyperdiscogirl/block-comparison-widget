@@ -1,5 +1,5 @@
 import type { BlockStack } from '../BlockComparisonWidget/types'
-import { PlusIcon, MinusIcon, WrenchIcon } from 'lucide-react'
+import { PlusIcon, MinusIcon, WrenchIcon, InfoIcon, XIcon, PlayIcon } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
 
 type ControlPanelProps = {
@@ -15,6 +15,8 @@ type ControlPanelProps = {
   setFloatMode: (mode: 'synced' | 'staggered' | 'off') => void
   shimmerEnabled: boolean
   setShimmerEnabled: (enabled: boolean) => void
+  comparisonLines: any[]
+  onResetComparisons: () => void
 }
 
 export function ControlPanel({ 
@@ -29,7 +31,9 @@ export function ControlPanel({
   floatMode,
   setFloatMode,
   shimmerEnabled,
-  setShimmerEnabled
+  setShimmerEnabled,
+  comparisonLines,
+  onResetComparisons
 }: ControlPanelProps) {
 const handleSelectChange = (index: number, value: number) => {
     const startingId = blockIdCounter;
@@ -80,10 +84,12 @@ const handleSelectChange = (index: number, value: number) => {
     }
   }
 
+  const hasActiveComparisons = comparisonLines.length > 0;
   return (
-    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100 text-xl lg:text-2xl p-4 md:p-6 lg:p-12 md:h-[85vh] w-full min-h-fit lg:min-h-0 md:w-[45%] flex flex-col justify-center items-center gap-4 md:gap-6 overflow-y-auto">
-      <h2 className="font-bold font-mono text-center text-indigo-100 flex items-center justify-center gap-2 text-2xl lg:text-3xl">
-        Control Panel<WrenchIcon />
+    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100 text-xl lg:text-2xl p-4 px-20 pt-10 lg:pt-0 lg:p-6 xl:p-12 lg:h-[85vh] w-full min-h-fit lg:min-h-0 lg:w-[45%] flex flex-col justify-center items-center gap-4 lg:gap-6 overflow-y-auto">
+      <h2 className="font-bold font-mono text-center text-indigo-100 flex items-center justify-center gap-4 text-3xl lg:text-4xl">
+        <WrenchIcon/>
+        Controls <WrenchIcon className="transform scale-x-[-1]"/>
       </h2>
       <div className="flex min-w-fit justify-center gap-5 text-blue-400">
         {stacks.map((stack, index) => (
@@ -91,7 +97,8 @@ const handleSelectChange = (index: number, value: number) => {
             <select 
               value={stack.blocks.length} 
               onChange={(e) => handleSelectChange(index, parseInt(e.target.value))}
-              className="bg-slate-700 text-white p-2 rounded-md text-center w-20"
+              className="bg-slate-700 text-white p-2 rounded-md text-center w-full"
+              disabled={mode === 'drawCompare'}
             >
               {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
                 <option key={num} value={num}>{num}</option>
@@ -100,15 +107,17 @@ const handleSelectChange = (index: number, value: number) => {
             <div className="flex justify-center gap-1">
               <button 
                 onClick={() => updateBlocks(index, true)} 
-                disabled={stack.blocks.length >= 10}
-                className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50"
+                disabled={stack.blocks.length >= 10 || mode === 'drawCompare'}
+                className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50 
+                          disabled:hover:bg-blue-500 hover:bg-blue-600 transition-colors"
               >
                 <PlusIcon className="w-8 h-8" />
               </button>
               <button 
                 onClick={() => updateBlocks(index, false)} 
-                disabled={stack.blocks.length <= 1}
-                className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50"
+                disabled={stack.blocks.length <= 1 || mode === 'drawCompare'}
+                className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50 
+                          disabled:hover:bg-blue-500 hover:bg-blue-600 transition-colors"
               >
                 <MinusIcon className="w-8 h-8" />
               </button>
@@ -122,7 +131,7 @@ const handleSelectChange = (index: number, value: number) => {
           
           <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Mode</h4>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="addRemove" 
@@ -131,7 +140,7 @@ const handleSelectChange = (index: number, value: number) => {
               />
               Add/Remove
             </label>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="drawCompare" 
@@ -146,16 +155,22 @@ const handleSelectChange = (index: number, value: number) => {
 
           <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Size</h4>
-            <label className="flex items-center gap-2">
+            <label className={`flex items-center gap-2 
+              ${hasActiveComparisons 
+                ? 'cursor-not-allowed opacity-50 hover:opacity-50' 
+                : 'cursor-pointer hover:opacity-80'
+              }`}>
               <input 
                 type="radio" 
                 value="sm" 
                 checked={blockSize === 'sm'} 
                 onChange={() => setBlockSize('sm')}
+                disabled={hasActiveComparisons}
+                className="disabled:cursor-not-allowed"
               />
               Small
             </label>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="lg" 
@@ -170,7 +185,7 @@ const handleSelectChange = (index: number, value: number) => {
 
           <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Float</h4>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="synced"
@@ -179,7 +194,7 @@ const handleSelectChange = (index: number, value: number) => {
               />
               Synced
             </label>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="staggered"
@@ -188,7 +203,7 @@ const handleSelectChange = (index: number, value: number) => {
               />
               Staggered
             </label>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="off"
@@ -203,7 +218,7 @@ const handleSelectChange = (index: number, value: number) => {
 
           <div className="flex flex-col gap-2 text-base lg:text-xl">
             <h4>Shimmer</h4>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="on"
@@ -212,7 +227,7 @@ const handleSelectChange = (index: number, value: number) => {
               />
               On
             </label>
-            <label className="flex items-center gap-2">
+            <label className="flex items-center gap-2 cursor-pointer">
               <input 
                 type="radio" 
                 value="off"
@@ -225,29 +240,53 @@ const handleSelectChange = (index: number, value: number) => {
         </div>
       </div>
       
-        <div className="mt-8 text-center text-lg lg:text-xl h-20">
+        <div className="text-center text-lg font-mono h-20">
           <AnimatePresence mode="wait">
-            {mode === 'addRemove' && (
-              <motion.p
-                key="addRemove"
+            {comparisonLines.length === 2 ? (
+              <motion.div
+                key="comparison-controls"
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.4 }}
+                className="flex gap-3 justify-center"
+              >
+                <button 
+                  onClick={onResetComparisons}
+                  className="px-3 py-2 border bg-blue-500 rounded-md hover:bg-blue-600 flex items-center gap-2"
+                >
+                  <XIcon className="w-5 h-5" />
+                  Reset
+                </button>
+                <button 
+                  onClick={() => {/* animation logic */}}
+                  className="animate-shimmer px-3 py-2 rounded-md border
+                    bg-blue-500 relative overflow-hidden hover:bg-blue-600
+                    before:absolute before:inset-0
+                    before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent
+                    before:translate-x-[-150%] before:animate-[shimmer_2s_infinite]
+                    flex items-center gap-2"
+                >
+                  <PlayIcon className="w-5 h-5" />
+                  Animate
+                </button>
+              </motion.div>
+            ) : (
+              <motion.div
+                key={mode}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.4 }}
               >
-                Double click the stack to add a block, drag the top block to remove
-              </motion.p>
-            )}
-            {mode === 'drawCompare' && (
-              <motion.p
-                key="drawCompare"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -5 }}
-                transition={{ duration: 0.4 }}
-              >
-                Click and drag from the top of one stack to the other to create a comparison line
-              </motion.p>
+                <p>
+                  <InfoIcon className="w-6 h-6 inline-block align-middle mr-2" />
+                  {mode === 'addRemove' 
+                    ? 'Double click the stack to add a block, drag the top block to remove'
+                    : 'Click and mouse from the end of one stack to the other and click to create a comparison line'
+                  }
+                </p>
+              </motion.div>
             )}
           </AnimatePresence>
         </div>

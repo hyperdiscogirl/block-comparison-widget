@@ -9,6 +9,11 @@ export default {
       transformOrigin: {
         '3d': '50% 50% -100px',
       },
+      keyframes: {
+        shimmer: {
+          '100%': { transform: 'translateX(100%)' },
+        },
+      },
     },
   },
   plugins: [],
