@@ -184,7 +184,7 @@ export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize
               const getHoverClasses = (hasLine: boolean) => 
                 !hasLine 
                   ? 'hover:before:opacity-100 hover:after:opacity-100 cursor-crosshair' 
-                  : 'cursor-not-allowed opacity-50';
+                  : '';
 
               return (['top', 'bottom'] as const).map((position) => {
                 // only show zones based on active comparison state

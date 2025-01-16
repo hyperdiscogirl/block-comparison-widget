@@ -90,8 +90,10 @@ const handleSelectChange = (index: number, value: number) => {
 
   const hasActiveComparisons = comparisonLines.length > 0;
   return (
-    <div className="bg-slate-900 rounded-xl text-sky-100 text-xl lg:text-2xl p-4 px-20 pt-10 lg:pt-0 lg:p-6 xl:p-12 lg:h-[85vh] w-full min-h-fit lg:min-h-0 lg:w-[45%] flex flex-col justify-center items-center gap-4 lg:gap-6 overflow-y-auto">
-      <h2 className="font-bold font-mono text-center text-sky-100 whitespace-nowrap flex items-center text-3xl 2xl:text-4xl">
+    <div className="bg-slate-900 rounded-xl text-sky-100 text-sm p-4 px-20 py-10 lg:py-0 lg:pt-0 lg:p-6 xl:p-12 
+                    lg:h-[85vh] w-full min-h-fit lg:min-h-0 lg:w-[45%] flex flex-col justify-center 
+                    items-center gap-4 overflow-y-auto md:overflow-x-auto overflow-x-hidden">
+      <h2 className="font-bold font-mono text-center text-sky-100 whitespace-nowrap flex items-center text-3xl">
         <WrenchIcon 
           className="w-6 h-6 inline-block align-middle mr-2" 
           fill="#e0e7ff"
@@ -104,7 +106,7 @@ const handleSelectChange = (index: number, value: number) => {
             <select 
               value={stack.blocks.length} 
               onChange={(e) => handleSelectChange(index, parseInt(e.target.value))}
-              className="bg-slate-700 text-white p-2 rounded-md text-center w-full"
+              className="bg-slate-700 text-white p-2 rounded-md text-2xl text-center w-full"
               disabled={mode === 'drawCompare'}
             >
               {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
@@ -134,11 +136,11 @@ const handleSelectChange = (index: number, value: number) => {
           </div>
         ))}
       </div>
-      <div className="text-2xl lg:text-2xl min-w-fit font-mono">
-        <div className="grid grid-cols-[1fr_auto_1fr] gap-y-4">
+      <div className="text-lg min-w-fit font-mono">
+        <div className="grid grid-cols-[1fr_auto_1fr] gap-y-2">
           <h3 className="col-span-3 text-center">Block Settings</h3>
           
-          <div className="flex flex-col gap-2 text-base lg:text-xl">
+          <div className="flex flex-col gap-2 text-base lg:text-lg">
             <h4>Mode</h4>
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
@@ -164,7 +166,7 @@ const handleSelectChange = (index: number, value: number) => {
 
           <div className="w-8" />
 
-          <div className="flex flex-col gap-2 text-base lg:text-xl">
+          <div className="flex flex-col gap-2 text-base lg:text-lg">
             <h4>Size</h4>
             <label className={`flex items-center gap-2 
               ${hasActiveComparisons 
@@ -198,9 +200,9 @@ const handleSelectChange = (index: number, value: number) => {
             </label>
           </div>
 
-          <h3 className="col-span-3 text-center mt-2">Animations</h3>
+          <h3 className="col-span-3 text-center">Animations</h3>
 
-          <div className="flex flex-col gap-2 text-base lg:text-xl">
+          <div className="flex flex-col gap-2 text-base lg:text-lg">
             <h4>Float</h4>
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
@@ -236,7 +238,7 @@ const handleSelectChange = (index: number, value: number) => {
 
           <div className="w-8" />
 
-          <div className="flex flex-col gap-2 text-base lg:text-xl">
+          <div className="flex flex-col gap-2 text-base lg:text-lg">
             <h4>Shimmer</h4>
             <label className="flex items-center gap-2 cursor-pointer">
               <input 
@@ -260,7 +262,7 @@ const handleSelectChange = (index: number, value: number) => {
             </label>
           </div>
         </div>
-        <label className="col-span-3 flex items-center gap-2 cursor-pointer justify-center mt-2 text-base lg:text-xl">
+        <label className="col-span-3 flex items-center gap-2 cursor-pointer justify-center mt-2 text-base lg:text-lg">
               <input 
                 type="checkbox"
                 checked={autoCompare}
