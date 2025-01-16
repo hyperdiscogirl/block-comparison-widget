@@ -326,7 +326,7 @@ const handleSelectChange = (index: number, value: number) => {
                       return (
                         <p>
                           <InfoIcon className="w-6 h-6 inline-block align-middle mr-2" />
-                          Click and mouse from the end of one stack to the other and click to create a comparison line
+                          Click at the same end of each stack to draw a comparison line
                         </p>
                       );
                     }

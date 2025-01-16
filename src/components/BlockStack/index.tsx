@@ -17,9 +17,10 @@ interface BlockStackProps {
     startStack: number;
     startPosition: 'top' | 'bottom';
   } | null;
+  hasExistingLine: (stackId: number, position: 'top' | 'bottom') => boolean;
 }
 
-export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize, floatMode, shimmerEnabled, onConnectionPoint, activeComparison }: BlockStackProps) {
+export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize, floatMode, shimmerEnabled, onConnectionPoint, activeComparison, hasExistingLine }: BlockStackProps) {
   const blocksContainerRef = useRef<HTMLDivElement>(null);
   const [zonePositions, setZonePositions] = useState({ top: 0, bottom: 0 });
 
@@ -121,9 +122,8 @@ export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize
     }
   };
 
-// wait i thinkthis is redundant check tomororw
-  const hasLine = (_position: 'top' | 'bottom') => {
-    return false; 
+  const hasLine = (position: 'top' | 'bottom') => {
+    return hasExistingLine(stack.id, position);
   };
 
   const handleContainerClick = (e: React.MouseEvent) => {
@@ -151,7 +151,7 @@ export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize
               key={block.id}
               index={index}
               totalBlocks={stack.blocks.length}
-              draggable={index === 0 && stack.blocks.length > 1}
+              draggable={index === 0 && stack.blocks.length > 1 && mode === 'addRemove'}
               onDragEnd={(event, info) => handleDragEnd(event, info, index)}
               size={blockSize}
               mode={mode}
@@ -161,7 +161,7 @@ export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize
             />
           ))}
         </AnimatePresence>
-        {mode === 'drawCompare' && (
+        {mode === 'drawCompare' && (!hasLine('top') || !hasLine('bottom')) && (
           <>
             {/* Define shared class strings */}
             {(() => {

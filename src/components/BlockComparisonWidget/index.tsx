@@ -251,6 +251,7 @@ export function BlockComparisonWidget() {
                 startStack: activeComparison.startStack,
                 startPosition: activeComparison.startPosition
               } : null}
+              hasExistingLine={hasExistingLine}
             />
           ))}
           
