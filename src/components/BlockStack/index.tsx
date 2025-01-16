@@ -166,7 +166,7 @@ export function BlockStack({ stack, onStackClick, onStackUpdate, mode, blockSize
             {/* Define shared class strings */}
             {(() => {
               const baseZoneClasses = `
-                absolute h-${blockSize === 'lg' ? '24' : '16'} z-0 w-${blockSize === 'lg' ? '24' : '16'} mx-auto left-0 right-0
+                absolute ${blockSize === 'lg' ? 'h-24 w-24' : 'h-16 w-16'} z-0 mx-auto left-0 right-0
                 rounded-[999px] overflow-hidden
                 before:absolute before:inset-0 before:opacity-0
                 before:bg-gradient-to-r before:from-transparent before:via-sky-500/5 before:to-transparent
