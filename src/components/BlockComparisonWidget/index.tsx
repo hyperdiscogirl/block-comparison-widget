@@ -150,7 +150,7 @@ export function BlockComparisonWidget() {
     <div className="w-full flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 xl:w-[80vw] 2xl:w-[70vw] overflow-hidden">
       <div 
         ref={containerRef}
-        className="bg-slate-800 rounded-xl shadow-xl p-4 md:p-6 h-[60vh] md:h-[85vh] w-full relative"
+        className="bg-slate-900 rounded-xl p-4 md:p-6 h-[60vh] md:h-[85vh] w-full relative"
         onClick={handleContainerClick}
       >
         <div 
@@ -203,6 +203,10 @@ export function BlockComparisonWidget() {
                   setActiveComparison(null);
                 }
               }}
+              activeComparison={activeComparison ? {
+                startStack: activeComparison.startStack,
+                startPosition: activeComparison.startPosition
+              } : null}
             />
           ))}
           

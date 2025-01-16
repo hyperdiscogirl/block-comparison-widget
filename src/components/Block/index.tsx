@@ -133,7 +133,7 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
         }}
       >
         <div 
-          className="absolute bg-blue-500"
+          className="absolute bg-sky-500"
           style={{
             width: `${faceSize}px`,
             height: `${faceSize}px`,
@@ -141,7 +141,7 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
           }}
         />
         <div 
-          className="absolute bg-blue-800"
+          className="absolute bg-sky-800"
           style={{
             width: `${faceSize}px`,
             height: `${faceSize}px`,
@@ -149,7 +149,7 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
           }}
         />
         <div 
-          className="absolute bg-blue-300"
+          className="absolute bg-sky-300"
           style={{
             width: `${faceSize}px`,
             height: `${faceSize}px`,

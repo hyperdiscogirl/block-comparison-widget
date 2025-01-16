@@ -86,12 +86,15 @@ const handleSelectChange = (index: number, value: number) => {
 
   const hasActiveComparisons = comparisonLines.length > 0;
   return (
-    <div className="bg-slate-800 rounded-xl shadow-xl text-indigo-100 text-xl lg:text-2xl p-4 px-20 pt-10 lg:pt-0 lg:p-6 xl:p-12 lg:h-[85vh] w-full min-h-fit lg:min-h-0 lg:w-[45%] flex flex-col justify-center items-center gap-4 lg:gap-6 overflow-y-auto">
-      <h2 className="font-bold font-mono text-center text-indigo-100 flex items-center justify-center gap-4 text-3xl lg:text-4xl">
-        <WrenchIcon/>
-        Controls <WrenchIcon className="transform scale-x-[-1]"/>
+    <div className="bg-slate-900 rounded-xl text-sky-100 text-xl lg:text-2xl p-4 px-20 pt-10 lg:pt-0 lg:p-6 xl:p-12 lg:h-[85vh] w-full min-h-fit lg:min-h-0 lg:w-[45%] flex flex-col justify-center items-center gap-4 lg:gap-6 overflow-y-auto">
+      <h2 className="font-bold font-mono text-center text-sky-100 whitespace-nowrap flex items-center text-3xl 2xl:text-4xl">
+        <WrenchIcon 
+          className="w-6 h-6 inline-block align-middle mr-2 transform scale-x-[-1] rotate-[25deg]" 
+          fill="#e0e7ff"
+        />
+        Control Panel
       </h2>
-      <div className="flex min-w-fit justify-center gap-5 text-blue-400">
+      <div className="flex min-w-fit justify-center gap-5 text-sky-400">
         {stacks.map((stack, index) => (
           <div key={stack.id} className="flex flex-col items-center gap-4">
             <select 
@@ -108,16 +111,18 @@ const handleSelectChange = (index: number, value: number) => {
               <button 
                 onClick={() => updateBlocks(index, true)} 
                 disabled={stack.blocks.length >= 10 || mode === 'drawCompare'}
-                className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50 
-                          disabled:hover:bg-blue-500 hover:bg-blue-600 transition-colors"
+                className="bg-sky-500 text-white p-2 rounded-md disabled:opacity-50 
+                          disabled:hover:bg-sky-500 hover:bg-sky-600 transition-colors
+                          shadow-sm shadow-sky-100"
               >
                 <PlusIcon className="w-8 h-8" />
               </button>
               <button 
                 onClick={() => updateBlocks(index, false)} 
                 disabled={stack.blocks.length <= 1 || mode === 'drawCompare'}
-                className="border bg-blue-500 text-white p-2 rounded-md disabled:opacity-50 
-                          disabled:hover:bg-blue-500 hover:bg-blue-600 transition-colors"
+                className="bg-sky-500 text-white p-2 rounded-md disabled:opacity-50 
+                          disabled:hover:bg-sky-500 hover:bg-sky-600 transition-colors
+                          shadow-sm shadow-sky-100"
               >
                 <MinusIcon className="w-8 h-8" />
               </button>
@@ -137,6 +142,7 @@ const handleSelectChange = (index: number, value: number) => {
                 value="addRemove" 
                 checked={mode === 'addRemove'} 
                 onChange={() => setMode('addRemove')}
+                className="accent-sky-500"
               />
               Add/Remove
             </label>
@@ -146,6 +152,7 @@ const handleSelectChange = (index: number, value: number) => {
                 value="drawCompare" 
                 checked={mode === 'drawCompare'} 
                 onChange={() => setMode('drawCompare')}
+                className="accent-sky-500"
               />
               Draw/Compare
             </label>
@@ -157,7 +164,7 @@ const handleSelectChange = (index: number, value: number) => {
             <h4>Size</h4>
             <label className={`flex items-center gap-2 
               ${hasActiveComparisons 
-                ? 'cursor-not-allowed opacity-50 hover:opacity-50' 
+                ? 'opacity-50 hover:opacity-50' 
                 : 'cursor-pointer hover:opacity-80'
               }`}>
               <input 
@@ -166,16 +173,22 @@ const handleSelectChange = (index: number, value: number) => {
                 checked={blockSize === 'sm'} 
                 onChange={() => setBlockSize('sm')}
                 disabled={hasActiveComparisons}
-                className="disabled:cursor-not-allowed"
+                className="accent-sky-500"
               />
               Small
             </label>
-            <label className="flex items-center gap-2 cursor-pointer">
+            <label className={`flex items-center gap-2 
+              ${hasActiveComparisons 
+                ? 'opacity-50 hover:opacity-50' 
+                : 'cursor-pointer hover:opacity-80'
+              }`}>
               <input 
                 type="radio" 
                 value="lg" 
                 checked={blockSize === 'lg'} 
                 onChange={() => setBlockSize('lg')}
+                disabled={hasActiveComparisons}
+                className="accent-sky-500"
               />
               Large
             </label>
@@ -191,6 +204,7 @@ const handleSelectChange = (index: number, value: number) => {
                 value="synced"
                 checked={floatMode === 'synced'} 
                 onChange={() => setFloatMode('synced')}
+                className="accent-sky-500"
               />
               Synced
             </label>
@@ -200,6 +214,7 @@ const handleSelectChange = (index: number, value: number) => {
                 value="staggered"
                 checked={floatMode === 'staggered'} 
                 onChange={() => setFloatMode('staggered')}
+                className="accent-sky-500"
               />
               Staggered
             </label>
@@ -209,6 +224,7 @@ const handleSelectChange = (index: number, value: number) => {
                 value="off"
                 checked={floatMode === 'off'} 
                 onChange={() => setFloatMode('off')}
+                className="accent-sky-500"
               />
               Off
             </label>
@@ -224,6 +240,7 @@ const handleSelectChange = (index: number, value: number) => {
                 value="on"
                 checked={shimmerEnabled} 
                 onChange={() => setShimmerEnabled(true)}
+                className="accent-sky-500"
               />
               On
             </label>
@@ -233,6 +250,7 @@ const handleSelectChange = (index: number, value: number) => {
                 value="off"
                 checked={!shimmerEnabled} 
                 onChange={() => setShimmerEnabled(false)}
+                className="accent-sky-500"
               />
               Off
             </label>
@@ -253,15 +271,17 @@ const handleSelectChange = (index: number, value: number) => {
               >
                 <button 
                   onClick={onResetComparisons}
-                  className="px-3 py-2 border bg-blue-500 rounded-md hover:bg-blue-600 flex items-center gap-2"
+                  className="px-3 py-2 bg-sky-500 rounded-md hover:bg-sky-600 flex items-center gap-2
+                            shadow-sm shadow-sky-100"
                 >
                   <XIcon className="w-5 h-5" />
                   Reset
                 </button>
                 <button 
                   onClick={() => {/* animation logic */}}
-                  className="animate-shimmer px-3 py-2 rounded-md border
-                    bg-blue-500 relative overflow-hidden hover:bg-blue-600
+                  className="animate-shimmer px-3 py-2 rounded-md
+                    bg-sky-500 relative overflow-hidden hover:bg-sky-600
+                    shadow-sm shadow-sky-100
                     before:absolute before:inset-0
                     before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent
                     before:translate-x-[-150%] before:animate-[shimmer_2s_infinite]
