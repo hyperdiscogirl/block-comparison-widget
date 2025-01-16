@@ -179,6 +179,16 @@ export function BlockComparisonWidget() {
     setComparisonLines(newLines);
   }, [autoCompare, interactionMode]);
 
+  const [isAnimatingComparison, setIsAnimatingComparison] = useState(false);
+
+  const handleAnimateComparison = () => {
+    setIsAnimatingComparison(true);
+  };
+
+  const handleAnimationComplete = () => {
+    setIsAnimatingComparison(false);
+  };
+
   return (
     <div className="w-full flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 xl:w-[80vw] 2xl:w-[70vw] overflow-hidden">
       <div 
@@ -260,6 +270,12 @@ export function BlockComparisonWidget() {
             activeComparison={activeComparison}
             mousePosition={mousePosition}
             containerRef={containerRef}
+            isAnimating={isAnimatingComparison}
+            stackSizes={{
+              1: stacks[0].blocks.length,
+              2: stacks[1].blocks.length
+            }}
+            onAnimationComplete={handleAnimationComplete}
           />
         </div>
       </div>
@@ -280,6 +296,7 @@ export function BlockComparisonWidget() {
         onResetComparisons={() => setComparisonLines([])}
         autoCompare={autoCompare}
         setAutoCompare={setAutoCompare}
+        handleAnimateComparison={handleAnimateComparison}
       />
     </div>
   )

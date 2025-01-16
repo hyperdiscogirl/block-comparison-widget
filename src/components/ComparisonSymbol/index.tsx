@@ -1,5 +1,5 @@
 import { motion } from 'framer-motion';
-
+import { useState } from 'react';
 interface ComparisonSymbolProps {
     type: '>' | '<' | '=';
     position: { x: number; y: number };
@@ -10,46 +10,130 @@ interface ComparisonSymbolProps {
       bottomStart: { x: number; y: number };
       bottomEnd: { x: number; y: number };
     };
+    persist?: boolean;
+    onAnimationComplete?: () => void;
   }
   
-  export function ComparisonSymbol({ type, position, isAnimating, linePositions }: ComparisonSymbolProps) {
-    const getSymbolPath = (type: '>' | '<' | '=') => {
+  export function ComparisonSymbol({ type, position, isAnimating, linePositions, persist = false, onAnimationComplete }: ComparisonSymbolProps) {
+    const [hasAnimated, setHasAnimated] = useState(false);
+    const [isGlowing, setIsGlowing] = useState(false);
+  
+    const getSymbolPath = () => {
       const size = 40;
       const x = position.x;
       const y = position.y;
       
-      switch(type) {
-        case '>':
-          return `M ${x-size/2} ${y-size/2} L ${x+size/2} ${y} L ${x-size/2} ${y+size/2}`;
-        case '<':
-          return `M ${x+size/2} ${y-size/2} L ${x-size/2} ${y} L ${x+size/2} ${y+size/2}`;
-        case '=':
-          return `M ${x-size/2} ${y-size/3} H ${x+size/2} M ${x-size/2} ${y+size/3} H ${x+size/2}`;
+      if (type === '=') {
+        return `
+          M ${x-size/2} ${y-size/3}
+          L ${x+size/2} ${y-size/3}
+          M ${x-size/2} ${y+size/3}
+          L ${x+size/2} ${y+size/3}
+        `;
       }
+      
+      // Define paths with identical structure for both '>' and '<'
+      const leftX = type === '>' ? x-size/2 : x+size/2;
+      const rightX = type === '>' ? x+size/2 : x-size/2;
+      
+      return `
+        M ${leftX} ${y-size/2}
+        L ${rightX} ${y}
+        M ${leftX} ${y+size/2}
+        L ${rightX} ${y}
+      `;
     };
   
-    const getInitialLinePaths = () => `
-      M ${linePositions.topStart.x} ${linePositions.topStart.y} 
-      L ${linePositions.topEnd.x} ${linePositions.topEnd.y}
-      M ${linePositions.bottomStart.x} ${linePositions.bottomStart.y}
-      L ${linePositions.bottomEnd.x} ${linePositions.bottomEnd.y}
-    `;
+    const getLinePaths = () => {
+      if (type === '=') {
+        return `
+          M ${linePositions.topStart.x} ${linePositions.topStart.y}
+          L ${linePositions.topEnd.x} ${linePositions.topEnd.y}
+          M ${linePositions.bottomStart.x} ${linePositions.bottomStart.y}
+          L ${linePositions.bottomEnd.x} ${linePositions.bottomEnd.y}
+        `;
+      }
+  
+      // For '<', swap start and end points to match the final symbol structure
+      const start = type === '>' ? linePositions.topStart : linePositions.topEnd;
+      const end = type === '>' ? linePositions.topEnd : linePositions.topStart;
+      const bottomStart = type === '>' ? linePositions.bottomStart : linePositions.bottomEnd;
+      const bottomEnd = type === '>' ? linePositions.bottomEnd : linePositions.bottomStart;
+  
+      return `
+        M ${start.x} ${start.y}
+        L ${end.x} ${end.y}
+        M ${bottomStart.x} ${bottomStart.y}
+        L ${bottomEnd.x} ${bottomEnd.y}
+      `;
+    };
+  
+    const shouldShowSymbol = isAnimating || (persist && hasAnimated);
   
     return (
-      <motion.path
-        initial={{ d: getInitialLinePaths() }}
-        animate={{ 
-          d: isAnimating ? getSymbolPath(type) : getInitialLinePaths(),
-          pathLength: isAnimating ? 1 : undefined
-        }}
-        transition={{ 
-          duration: 1,
-          ease: "easeInOut"
-        }}
-        stroke="white"
-        strokeWidth={5}
-        fill="none"
-        strokeLinecap="round"
-      />
+      <>
+        <defs>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feFlood floodColor="white" floodOpacity="0.4" result="glow"/>
+            <feComposite in="glow" in2="blur" operator="in" result="softGlow"/>
+            <feMerge>
+              <feMergeNode in="softGlow"/>
+              <feMergeNode in="softGlow"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+        </defs>
+
+        <motion.path
+          initial={{ d: getLinePaths() }}
+          animate={{ 
+            d: shouldShowSymbol ? getSymbolPath() : getLinePaths(),
+            filter: shouldShowSymbol ? 'url(#glow)' : 'none',
+          }}
+          transition={{ 
+            duration: 1,
+            ease: [0.4, 0, 0.2, 1],
+            type: "tween"
+          }}
+          onAnimationComplete={() => {
+            if (isAnimating) {
+              setHasAnimated(true);
+              setIsGlowing(true);
+              onAnimationComplete?.();
+            }
+          }}
+          stroke="white"
+          strokeWidth={5}
+          fill="none"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+
+        {/* Pulsing overlay */}
+        {isGlowing && (
+          <motion.path
+            d={getSymbolPath()}
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: [0, 0.3, 0],
+            }}
+            transition={{
+              duration: 2,
+              repeat: Infinity,
+              ease: "easeInOut"
+            }}
+            stroke="white"
+            strokeWidth={6}
+            fill="none"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{
+              filter: 'url(#glow)',
+              pointerEvents: 'none'
+            }}
+          />
+        )}
+      </>
     );
   }

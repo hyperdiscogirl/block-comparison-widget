@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { getStackBlockPositions } from '../../utils/stackPositioning';
-
+import { ComparisonSymbol } from '../ComparisonSymbol';
 export interface ComparisonLine {
   id: string;
   startStack: number;
@@ -19,13 +19,19 @@ interface ComparisonLayerProps {
   } | null;
   mousePosition: { x: number; y: number } | null;
   containerRef: React.RefObject<HTMLDivElement>;
+  isAnimating?: boolean;
+  stackSizes: { [key: number]: number };
+  onAnimationComplete?: () => void;
 }
 
 export function ComparisonLayer({ 
     comparisonLines, 
     activeComparison, 
     mousePosition,
-    containerRef 
+    containerRef,
+    isAnimating = false,
+    stackSizes,
+    onAnimationComplete
   }: ComparisonLayerProps) {
     const OFFSET = 12;
     
@@ -63,27 +69,52 @@ export function ComparisonLayer({
           height: '100%'
         }}
       >
-        {/* Completed comparison lines */}
-        {comparisonLines.map(line => {
-          const start = getStackPosition(line.startStack - 1, line.position);
-          const end = getStackPosition(line.endStack - 1, line.position);
-          
-          return (
-            <motion.path
-              key={line.id}
-              d={createPath(start.x, start.y, end.x, end.y)}
-              stroke="white"
-              strokeWidth={5}
-              strokeLinecap="round" 
-              style={{
-                filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))',
-              }}
-              initial={{ pathLength: 0 }}
-              animate={{ pathLength: 1 }}
-              transition={{ duration: 0.5 }}
-            />
-          );
-        })}
+        {comparisonLines.length === 2 ? (
+          <ComparisonSymbol
+            type={(() => {
+              const stack1Size = stackSizes[1];
+              const stack2Size = stackSizes[2];
+              
+              if (stack1Size === stack2Size) return '=';
+              return stack1Size < stack2Size ? '<' : '>';
+            })()}
+            position={{
+              x: (getStackPosition(0, 'top').x + getStackPosition(1, 'top').x) / 2,
+              y: (getStackPosition(0, 'top').y + getStackPosition(1, 'bottom').y) / 2
+            }}
+            isAnimating={isAnimating}
+            linePositions={{
+              topStart: getStackPosition(0, 'top'),
+              topEnd: getStackPosition(1, 'top'),
+              bottomStart: getStackPosition(0, 'bottom'),
+              bottomEnd: getStackPosition(1, 'bottom')
+            }}
+            persist={true}
+            onAnimationComplete={onAnimationComplete} 
+          />
+        ) : (
+          // Show individual lines while drawing
+          comparisonLines.map(line => {
+            const start = getStackPosition(line.startStack - 1, line.position);
+            const end = getStackPosition(line.endStack - 1, line.position);
+            
+            return (
+              <motion.path
+                key={line.id}
+                d={createPath(start.x, start.y, end.x, end.y)}
+                stroke="white"
+                strokeWidth={5}
+                strokeLinecap="round"
+                style={{
+                  filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))',
+                }}
+                initial={{ pathLength: 0 }}
+                animate={{ pathLength: 1 }}
+                transition={{ duration: 0.5 }}
+              />
+            );
+          })
+        )}
 
         {/* Active drawing line */}
         {activeComparison && mousePosition && containerRef.current && (

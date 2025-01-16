@@ -19,6 +19,7 @@ type ControlPanelProps = {
   onResetComparisons: () => void
   autoCompare: boolean
   setAutoCompare: (enabled: boolean) => void
+  handleAnimateComparison: () => void
 }
 
 export function ControlPanel({ 
@@ -37,7 +38,8 @@ export function ControlPanel({
   comparisonLines,
   onResetComparisons,
   autoCompare,
-  setAutoCompare
+  setAutoCompare,
+  handleAnimateComparison
 }: ControlPanelProps) {
 const handleSelectChange = (index: number, value: number) => {
     const startingId = blockIdCounter;
@@ -293,7 +295,7 @@ const handleSelectChange = (index: number, value: number) => {
                   Reset
                 </button>
                 <button 
-                  onClick={() => {/* animation logic */}}
+                  onClick={handleAnimateComparison}
                   className="animate-shimmer px-3 py-2 rounded-md
                     bg-sky-500 relative overflow-hidden hover:bg-sky-600
                     shadow-sm shadow-sky-100
