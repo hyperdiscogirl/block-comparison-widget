@@ -15,6 +15,7 @@ interface ComparisonLayerProps {
     startStack: number;
     startPosition: 'top' | 'bottom';
     startY: number;
+    startX: number;
   } | null;
   mousePosition: { x: number; y: number } | null;
   containerRef: React.RefObject<HTMLDivElement>;

@@ -17,6 +17,8 @@ type ControlPanelProps = {
   setShimmerEnabled: (enabled: boolean) => void
   comparisonLines: any[]
   onResetComparisons: () => void
+  autoCompare: boolean
+  setAutoCompare: (enabled: boolean) => void
 }
 
 export function ControlPanel({ 
@@ -33,7 +35,9 @@ export function ControlPanel({
   shimmerEnabled,
   setShimmerEnabled,
   comparisonLines,
-  onResetComparisons
+  onResetComparisons,
+  autoCompare,
+  setAutoCompare
 }: ControlPanelProps) {
 const handleSelectChange = (index: number, value: number) => {
     const startingId = blockIdCounter;
@@ -89,7 +93,7 @@ const handleSelectChange = (index: number, value: number) => {
     <div className="bg-slate-900 rounded-xl text-sky-100 text-xl lg:text-2xl p-4 px-20 pt-10 lg:pt-0 lg:p-6 xl:p-12 lg:h-[85vh] w-full min-h-fit lg:min-h-0 lg:w-[45%] flex flex-col justify-center items-center gap-4 lg:gap-6 overflow-y-auto">
       <h2 className="font-bold font-mono text-center text-sky-100 whitespace-nowrap flex items-center text-3xl 2xl:text-4xl">
         <WrenchIcon 
-          className="w-6 h-6 inline-block align-middle mr-2 transform scale-x-[-1] rotate-[25deg]" 
+          className="w-6 h-6 inline-block align-middle mr-2" 
           fill="#e0e7ff"
         />
         Control Panel
@@ -256,6 +260,15 @@ const handleSelectChange = (index: number, value: number) => {
             </label>
           </div>
         </div>
+        <label className="col-span-3 flex items-center gap-2 cursor-pointer justify-center mt-2 text-base lg:text-xl">
+              <input 
+                type="checkbox"
+                checked={autoCompare}
+                onChange={(e) => setAutoCompare(e.target.checked)}
+                className="accent-sky-500"
+              />
+              Auto-Compare
+            </label>
       </div>
       
         <div className="text-center text-lg font-mono h-20">
@@ -300,11 +313,25 @@ const handleSelectChange = (index: number, value: number) => {
                 transition={{ duration: 0.4 }}
               >
                 <p>
-                  <InfoIcon className="w-6 h-6 inline-block align-middle mr-2" />
-                  {mode === 'addRemove' 
-                    ? 'Double click the stack to add a block, drag the top block to remove'
-                    : 'Click and mouse from the end of one stack to the other and click to create a comparison line'
-                  }
+                  {(() => {
+                    if (mode === 'addRemove') {
+                      return (
+                        <p>
+                          <InfoIcon className="w-6 h-6 inline-block align-middle mr-2" />
+                          Double click the stack to add a block, drag the top block to remove
+                        </p>
+                      );
+                    }
+                    if (!autoCompare) {
+                      return (
+                        <p>
+                          <InfoIcon className="w-6 h-6 inline-block align-middle mr-2" />
+                          Click and mouse from the end of one stack to the other and click to create a comparison line
+                        </p>
+                      );
+                    }
+                    return null;
+                  })()}
                 </p>
               </motion.div>
             )}

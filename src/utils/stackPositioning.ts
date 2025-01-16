@@ -18,3 +18,26 @@ export function getStackBlockPositions(stackElement: Element | null, offset: num
       bottom: lastRect.bottom + offset  // Move interaction zone down
     };
   }
+
+  export function getStackPosition(
+    containerRef: React.RefObject<HTMLDivElement>, 
+    stackIndex: number, 
+    position: 'top' | 'bottom',
+    offset: number = 12
+) {
+    if (!containerRef.current) return { x: 0, y: 0 };
+    
+    const container = containerRef.current;
+    const containerWidth = container.clientWidth;
+    const x = (containerWidth / 3) * (stackIndex + 1);
+    
+    const stackElement = container.querySelectorAll('.relative.flex-grow')[stackIndex];
+    const positions = getStackBlockPositions(stackElement, offset);
+    const containerRect = container.getBoundingClientRect();
+    
+    const y = position === 'top' 
+      ? positions.top - containerRect.top 
+      : positions.bottom - containerRect.top;
+    
+    return { x, y };
+}

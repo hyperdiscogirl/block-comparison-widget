@@ -6,61 +6,67 @@ import type { InteractionMode, BlockStack as BlockStackType } from './types'
 import type { ComparisonLine } from '../ComparisonLine'
 
 export function BlockComparisonWidget() {
- // purpose of this is to generate unique ids for the blocks
- const initialStack1Length = 5;
- const initialStack2Length = 2;
- const totalInitialBlocks = initialStack1Length + initialStack2Length;
+  // randomize the initial stack lengths
+  const generateRandomLengths = () => {
+    const length1 = Math.floor(Math.random() * 6) + 1;  // 1-6
+    let length2;
+    do {
+      length2 = Math.floor(Math.random() * 6) + 1;  // 1-6
+    } while (length2 === length1); 
+    
+    return [length1, length2];
+  };
 
- // initialize counter to start after all our initial blocks
- const [blockIdCounter, setBlockIdCounter] = useState(totalInitialBlocks);
+  const [initialStack1Length, initialStack2Length] = generateRandomLengths();
+  const totalInitialBlocks = initialStack1Length + initialStack2Length;
 
- // create our initial stacks with sequential IDs
- const [stacks, setStacks] = useState<BlockStackType[]>([
-   { 
-     id: 1, 
-     blocks: Array.from({ length: initialStack1Length }, (_, i) => ({ 
-       // First stack blocks will have IDs 0 through 4
-       id: `stack1-block-${i}`, 
-       position: i 
-     })), 
-     value: 2, 
-     mode: 'label' 
-   },
-   { 
-     id: 2, 
-     blocks: Array.from({ length: initialStack2Length }, (_, i) => ({ 
-       // second stack blocks will have IDs 5 and 6
-       // add initialStack1Length to ensure no overlap with first stack
-       id: `stack2-block-${i + initialStack1Length}`, 
-       position: i 
-     })), 
-     value: 4, 
-     mode: 'label' 
-   }
- ]);
+  // initialize counter to start after all our initial blocks
+  const [blockIdCounter, setBlockIdCounter] = useState(totalInitialBlocks);
+
+  // create our initial stacks with sequential IDs
+  const [stacks, setStacks] = useState<BlockStackType[]>([
+    { 
+      id: 1, 
+      blocks: Array.from({ length: initialStack1Length }, (_, i) => ({ 
+        id: `stack1-block-${i}`, 
+        position: i 
+      })), 
+      value: 2, 
+      mode: 'label' 
+    },
+    { 
+      id: 2, 
+      blocks: Array.from({ length: initialStack2Length }, (_, i) => ({ 
+        id: `stack2-block-${i + initialStack1Length}`, 
+        position: i 
+      })), 
+      value: 4, 
+      mode: 'label' 
+    }
+  ]);
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('addRemove')
   const [blockSize, setBlockSize] = useState<'sm' | 'lg'>('sm');
   const [floatMode, setFloatMode] = useState<'synced' | 'staggered' | 'off'>('synced');
   const [shimmerEnabled, setShimmerEnabled] = useState(true);
 
-  // Add new state for comparisons
   const [comparisonLines, setComparisonLines] = useState<ComparisonLine[]>([]);
   const [activeComparison, setActiveComparison] = useState<{
     startStack: number;
     startPosition: 'top' | 'bottom';
     startY: number;
+    startX: number;
   } | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   
-  // Reference to our container for position calculations
+  // reference to container for position calculations
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Track mouse position during comparison drawing
+  // track mouse position during comparison drawing
   useEffect(() => {
     if (!activeComparison) return;
 
     const handleMouseMove = (e: MouseEvent) => {
-      // Get position relative to our container
+      // get position relative to container
       if (containerRef.current) {
         const rect = containerRef.current.getBoundingClientRect();
         setMousePosition({
@@ -74,12 +80,12 @@ export function BlockComparisonWidget() {
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [activeComparison]);
 
-  // Add debug logging to help us see what's happening
+  // debug logging
   console.log('Active comparison:', activeComparison);
   console.log('Mouse position:', mousePosition);
   console.log('Comparison lines:', comparisonLines);
 
-  // Clear comparison state when switching to addRemove mode
+  // reset comparison state when switching mode
   useEffect(() => {
     if (interactionMode === 'addRemove') {
       setComparisonLines([]);
@@ -88,7 +94,6 @@ export function BlockComparisonWidget() {
     }
   }, [interactionMode]);
 
-  // Helper to check if a position already has a line
   const hasExistingLine = (stackId: number, position: 'top' | 'bottom') => {
     return comparisonLines.some(line => 
       (line.startStack === stackId || line.endStack === stackId) && 
@@ -134,17 +139,45 @@ export function BlockComparisonWidget() {
     }))
   }
 
-  // Add click handler for the container
   const handleContainerClick = (e: React.MouseEvent) => {
-    // Only handle clicks in compare mode and when there's an active comparison
+    // only handle clicks in compare mode and when there's an active comparison
     if (interactionMode === 'drawCompare' && activeComparison) {
-      // Check if the click was directly on the container or blocks container
       if (e.target === e.currentTarget) {
         setActiveComparison(null);
         setMousePosition(null);
       }
     }
   };
+
+  const [autoCompare, setAutoCompare] = useState(false);
+
+  // auto-comparison
+  useEffect(() => {
+    if (!autoCompare || interactionMode !== 'drawCompare') return;
+
+    // clear existing comparisons when enabling auto-compare
+    setComparisonLines([]);
+
+    // create automatic comparisons
+    const newLines = [
+      {
+        id: `comparison-top-${Date.now()}`,
+        startStack: 1,
+        endStack: 2,
+        position: 'top' as const,
+        type: 'auto' as const
+      },
+      {
+        id: `comparison-bottom-${Date.now()}`,
+        startStack: 1,
+        endStack: 2,
+        position: 'bottom' as const,
+        type: 'auto' as const
+      }
+    ];
+
+    setComparisonLines(newLines);
+  }, [autoCompare, interactionMode]);
 
   return (
     <div className="w-full flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 xl:w-[80vw] 2xl:w-[70vw] overflow-hidden">
@@ -177,30 +210,41 @@ export function BlockComparisonWidget() {
               onConnectionPoint={(position, y) => {
                 if (interactionMode !== 'drawCompare') return;
                 
-                // Check if this position already has a line
+                // check if this position already has a line
                 if (hasExistingLine(stack.id, position)) return;
 
                 if (!activeComparison) {
-                  // Start new comparison
-                  setActiveComparison({
-                    startStack: stack.id,
-                    startPosition: position,
-                    startY: y
-                  });
+                    const rect = containerRef.current?.getBoundingClientRect();
+                    if (!rect) return;
+                    
+                    const startX = (rect.width / 3) * stack.id;
+                    
+                    // new comparison
+                    setActiveComparison({
+                        startStack: stack.id,
+                        startPosition: position,
+                        startY: y,
+                        startX: startX
+                    });
+                    setMousePosition({
+                        x: startX,
+                        y: y
+                    });
                 } else if (
-                  activeComparison.startStack !== stack.id && 
-                  activeComparison.startPosition === position &&
-                  !hasExistingLine(activeComparison.startStack, position)
+                    activeComparison.startStack !== stack.id && 
+                    activeComparison.startPosition === position &&
+                    !hasExistingLine(activeComparison.startStack, position)
                 ) {
-                  // Complete valid comparison
-                  setComparisonLines(lines => [...lines, {
-                    id: `comparison-${Date.now()}`,
-                    startStack: activeComparison.startStack,
-                    endStack: stack.id,
-                    position,
-                    type: 'student'
-                  }]);
-                  setActiveComparison(null);
+                    // complete valid comparison
+                    setComparisonLines(lines => [...lines, {
+                        id: `comparison-${Date.now()}`,
+                        startStack: activeComparison.startStack,
+                        endStack: stack.id,
+                        position,
+                        type: 'student'
+                    }]);
+                    setActiveComparison(null);
+                    setMousePosition(null);  // clear mouse position when completing
                 }
               }}
               activeComparison={activeComparison ? {
@@ -233,6 +277,8 @@ export function BlockComparisonWidget() {
         setShimmerEnabled={setShimmerEnabled}
         comparisonLines={comparisonLines}
         onResetComparisons={() => setComparisonLines([])}
+        autoCompare={autoCompare}
+        setAutoCompare={setAutoCompare}
       />
     </div>
   )
