@@ -222,7 +222,7 @@ export function BlockStack({
                 before:absolute before:inset-0 before:opacity-90 
                 before:bg-gradient-to-r before:from-transparent before:via-sky-500/5 before:to-transparent
                 after:absolute after:inset-0 after:opacity-90 after:bg-sky-700/40 after:blur-xl
-                transition-all duration-500
+                transition-all duration-1000 opacity-0 motion-safe:animate-fadeIn
               `;
 
               const innerGlowClasses = `
@@ -235,9 +235,9 @@ export function BlockStack({
 
               return (['top', 'bottom'] as const).map((position) => {
                 const shouldShowZone = () => {
-                  if (!activeComparison) return true;
+                  if (!activeComparison) return !hasLine(position);
                   if (stack.id === activeComparison.startStack) return false;
-                  return position === activeComparison.startPosition;
+                  return position === activeComparison.startPosition && !hasLine(position);
                 };
 
                 if (!shouldShowZone()) return null;
