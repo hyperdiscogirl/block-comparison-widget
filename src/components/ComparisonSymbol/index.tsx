@@ -104,7 +104,7 @@ interface ComparisonSymbolProps {
             }
           }}
           stroke="white"
-          strokeWidth={5}
+          strokeWidth={8}
           fill="none"
           strokeLinecap="round"
           strokeLinejoin="round"
@@ -124,7 +124,7 @@ interface ComparisonSymbolProps {
               ease: "easeInOut"
             }}
             stroke="white"
-            strokeWidth={6}
+            strokeWidth={8}
             fill="none"
             strokeLinecap="round"
             strokeLinejoin="round"

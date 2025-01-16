@@ -58,6 +58,10 @@ export function BlockComparisonWidget() {
   } | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   
+  // Track animation states
+  const [lineAnimations, setLineAnimations] = useState<Set<string>>(new Set());
+  const [isAnimatingSymbol, setIsAnimatingSymbol] = useState(false);
+
   // reference to container for position calculations
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -155,20 +159,26 @@ export function BlockComparisonWidget() {
   useEffect(() => {
     if (!autoCompare || interactionMode !== 'drawCompare') return;
 
-    // clear existing comparisons when enabling auto-compare
+    // Clear existing comparisons when enabling auto-compare
     setComparisonLines([]);
 
-    // create automatic comparisons
+    // Create automatic comparisons with unique IDs
+    const topLineId = `auto-comparison-top-${Date.now()}`;
+    const bottomLineId = `auto-comparison-bottom-${Date.now()}`;
+
+    // Add these IDs to the animation tracking set
+    setLineAnimations(new Set([topLineId, bottomLineId]));
+
     const newLines = [
       {
-        id: `comparison-top-${Date.now()}`,
+        id: topLineId,
         startStack: 1,
         endStack: 2,
         position: 'top' as const,
         type: 'auto' as const
       },
       {
-        id: `comparison-bottom-${Date.now()}`,
+        id: bottomLineId,
         startStack: 1,
         endStack: 2,
         position: 'bottom' as const,
@@ -179,14 +189,20 @@ export function BlockComparisonWidget() {
     setComparisonLines(newLines);
   }, [autoCompare, interactionMode]);
 
-  const [isAnimatingComparison, setIsAnimatingComparison] = useState(false);
+  const handleLineAnimationComplete = (lineId: string) => {
+    setLineAnimations(prev => {
+      const next = new Set(prev);
+      next.delete(lineId);
+      return next;
+    });
+  };
 
   const handleAnimateComparison = () => {
-    setIsAnimatingComparison(true);
+    setIsAnimatingSymbol(true);
   };
 
   const handleAnimationComplete = () => {
-    setIsAnimatingComparison(false);
+    setIsAnimatingSymbol(false);
   };
 
   return (
@@ -245,16 +261,19 @@ export function BlockComparisonWidget() {
                     activeComparison.startPosition === position &&
                     !hasExistingLine(activeComparison.startStack, position)
                 ) {
-                    // complete valid comparison
+                    // Completing a comparison
+                    const newLineId = `manual-comparison-${Date.now()}`;
+                    setLineAnimations(prev => new Set(prev).add(newLineId));
+                    
                     setComparisonLines(lines => [...lines, {
-                        id: `comparison-${Date.now()}`,
+                        id: newLineId,
                         startStack: activeComparison.startStack,
                         endStack: stack.id,
                         position,
                         type: 'student'
                     }]);
                     setActiveComparison(null);
-                    setMousePosition(null);  // clear mouse position when completing
+                    setMousePosition(null);
                 }
               }}
               activeComparison={activeComparison ? {
@@ -270,12 +289,14 @@ export function BlockComparisonWidget() {
             activeComparison={activeComparison}
             mousePosition={mousePosition}
             containerRef={containerRef}
-            isAnimating={isAnimatingComparison}
+            isAnimating={isAnimatingSymbol}
             stackSizes={{
               1: stacks[0].blocks.length,
               2: stacks[1].blocks.length
             }}
             onAnimationComplete={handleAnimationComplete}
+            onLineAnimationComplete={handleLineAnimationComplete}
+            animatingLines={lineAnimations}
           />
         </div>
       </div>

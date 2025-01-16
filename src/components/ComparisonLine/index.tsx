@@ -22,6 +22,8 @@ interface ComparisonLayerProps {
   isAnimating?: boolean;
   stackSizes: { [key: number]: number };
   onAnimationComplete?: () => void;
+  onLineAnimationComplete: (lineId: string) => void;
+  animatingLines: Set<string>;
 }
 
 export function ComparisonLayer({ 
@@ -31,10 +33,11 @@ export function ComparisonLayer({
     containerRef,
     isAnimating = false,
     stackSizes,
-    onAnimationComplete
+    onAnimationComplete,
+    onLineAnimationComplete,
+    animatingLines
   }: ComparisonLayerProps) {
     const OFFSET = 12;
-    
     
     const createPath = (startX: number, startY: number, endX: number, endY: number) => {
       //  M command moves to the start point without drawing
@@ -60,6 +63,9 @@ export function ComparisonLayer({
       return { x, y };
     };
 
+    // Check if we should show the symbol (all lines done animating)
+    const showSymbol = comparisonLines.length === 2 && animatingLines.size === 0;
+
     return (
       <svg 
         className="absolute inset-0 pointer-events-none z-40" 
@@ -69,12 +75,46 @@ export function ComparisonLayer({
           height: '100%'
         }}
       >
-        {comparisonLines.length === 2 ? (
+        {/* Lines fade out when symbol appears */}
+        {comparisonLines.map(line => {
+          const start = getStackPosition(line.startStack - 1, line.position);
+          const end = getStackPosition(line.endStack - 1, line.position);
+          const isAnimating = animatingLines.has(line.id);
+          
+          return (
+            <motion.path
+              key={line.id}
+              d={createPath(start.x, start.y, end.x, end.y)}
+              stroke="white"
+              strokeWidth={8}
+              strokeLinecap="round"
+              style={{
+                filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))',
+              }}
+              initial={isAnimating ? { pathLength: 0, opacity: 1 } : { pathLength: 1, opacity: 1 }}
+              animate={{ 
+                pathLength: 1,
+                opacity: showSymbol ? 0 : 1
+              }}
+              transition={{ 
+                pathLength: { duration: 0.5, ease: "easeInOut" },
+                opacity: { duration: 0.3 }
+              }}
+              onAnimationComplete={() => {
+                if (isAnimating) {
+                  onLineAnimationComplete(line.id);
+                }
+              }}
+            />
+          );
+        })}
+
+        {/* Show symbol when lines are done */}
+        {showSymbol && (
           <ComparisonSymbol
             type={(() => {
               const stack1Size = stackSizes[1];
               const stack2Size = stackSizes[2];
-              
               if (stack1Size === stack2Size) return '=';
               return stack1Size < stack2Size ? '<' : '>';
             })()}
@@ -90,30 +130,8 @@ export function ComparisonLayer({
               bottomEnd: getStackPosition(1, 'bottom')
             }}
             persist={true}
-            onAnimationComplete={onAnimationComplete} 
+            onAnimationComplete={onAnimationComplete}
           />
-        ) : (
-          // Show individual lines while drawing
-          comparisonLines.map(line => {
-            const start = getStackPosition(line.startStack - 1, line.position);
-            const end = getStackPosition(line.endStack - 1, line.position);
-            
-            return (
-              <motion.path
-                key={line.id}
-                d={createPath(start.x, start.y, end.x, end.y)}
-                stroke="white"
-                strokeWidth={5}
-                strokeLinecap="round"
-                style={{
-                  filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))',
-                }}
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.5 }}
-              />
-            );
-          })
         )}
 
         {/* Active drawing line */}
@@ -126,7 +144,7 @@ export function ComparisonLayer({
               mousePosition.y
             )}
             stroke="white"
-            strokeWidth={5}
+            strokeWidth={8}
             strokeDasharray="4 4"
             style={{
               filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))',
