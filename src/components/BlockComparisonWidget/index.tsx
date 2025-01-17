@@ -131,7 +131,6 @@ export function BlockComparisonWidget() {
   }, [
     blockSize, 
     interactionMode, 
-    shimmerEnabled,
     stacks.map(stack => stack.blocks.length).join(',') 
   ]);
 
@@ -165,7 +164,6 @@ export function BlockComparisonWidget() {
         return stack
       }));
   
-      // update the counter after we've used the ID
       setBlockIdCounter(newBlockId + 1);
     }
   }
@@ -173,7 +171,6 @@ export function BlockComparisonWidget() {
   const handleStackUpdate = (stackId: number, removeIndex: number) => {
     setStacks(stacks.map(stack => {
       if (stack.id === stackId) {
-        // remove block at specific index (usually top)
         return {
           ...stack,
           blocks: stack.blocks.filter((_, index) => index !== removeIndex)
@@ -185,7 +182,6 @@ export function BlockComparisonWidget() {
 
   // comparison handlers
   const handleContainerClick = (e: React.MouseEvent) => {
-    // only handle clicks in compare mode and when there's an active comparison
     if (interactionMode === 'drawCompare' && activeComparison) {
       if (e.target === e.currentTarget) {
         setActiveComparison(null);
@@ -248,7 +244,6 @@ export function BlockComparisonWidget() {
               onConnectionPoint={(position, y) => {
                 if (interactionMode !== 'drawCompare') return;
                 
-                // check if this position already has a line
                 if (hasExistingLine(stack.id, position)) return;
 
                 if (!activeComparison) {
@@ -257,7 +252,6 @@ export function BlockComparisonWidget() {
                     
                     const startX = (rect.width / 3) * stack.id;
                     
-                    // new comparison
                     setActiveComparison({
                         startStack: stack.id,
                         startPosition: position,
@@ -273,7 +267,6 @@ export function BlockComparisonWidget() {
                     activeComparison.startPosition === position &&
                     !hasExistingLine(activeComparison.startStack, position)
                 ) {
-                    // Completing a comparison
                     const newLineId = `manual-comparison-${Date.now()}`;
                     setLineAnimations(prev => new Set(prev).add(newLineId));
                     
