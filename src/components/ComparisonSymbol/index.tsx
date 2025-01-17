@@ -68,7 +68,6 @@ interface ComparisonSymbolProps {
     };
   
     const shouldShowSymbol = isAnimating || (persist && hasAnimated);
-    const shouldGlow = persist || isAnimating;
   
     return (
       <>
@@ -109,7 +108,6 @@ interface ComparisonSymbolProps {
           strokeLinejoin="round"
         />
 
-        {/* Pulsing overlay - make it more subtle for the symbol */}
         {isGlowing && (
           <motion.path
             d={getSymbolPath()}
