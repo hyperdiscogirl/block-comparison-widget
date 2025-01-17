@@ -214,7 +214,7 @@ export function BlockComparisonWidget() {
   };
 
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 xl:w-[80vw] 2xl:w-[70vw] overflow-hidden relative">
+    <div className="w-full flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 xl:w-[80vw] 2xl:w-[70vw] overflow-hidden">
       <div 
         ref={containerRef}
         className="bg-slate-900 rounded-xl p-4 md:p-6 h-[60vh] md:h-[85vh] w-full relative"
@@ -326,9 +326,6 @@ export function BlockComparisonWidget() {
         isAnimating={isAnimatingSymbol}
         hasAnimated={hasAnimated}
       />
-      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 lg:left-12 text-xs text-slate-500">
-        Made with ♡ by <a href="http://hyperdiscogirl.netlify.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300">Disco</a>
-      </div>
     </div>
   )
 }
