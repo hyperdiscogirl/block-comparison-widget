@@ -3,6 +3,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Block as BlockComponent } from '../Block';
 import type { BlockStack as BlockStackType } from '../BlockComparisonWidget/types';
 import { getStackBlockPositions } from '../../utils/stackPositioning';
+import { motion } from 'framer-motion';
 
 interface BlockStackProps {
   stack: BlockStackType;
@@ -33,37 +34,23 @@ export function BlockStack({
   hasExistingLine
 }: BlockStackProps) {
   const blocksContainerRef = useRef<HTMLDivElement>(null);
-  const [zonePositions, setZonePositions] = useState({ top: 0, bottom: 0 });
-  const INTERACTION_ZONE_OFFSET = 12;
   const isUpdatingRef = useRef(false);
-  const [isExiting, setIsExiting] = useState(false);
   const exitingBlockRef = useRef<string | null>(null);
   const previousBlockCountRef = useRef(stack.blocks.length);
+  const INTERACTION_ZONE_OFFSET = 12;
 
-  // Create a shared motion value to sync animation
+  const [zonePositions, setZonePositions] = useState({ top: 0, bottom: 0 });
+  const [isExiting, setIsExiting] = useState(false);
   const floatProgress = useMotionValue(0);
 
-  // Start the animation cycle when component mounts
-  useEffect(() => {
-    if (floatMode === 'off') return;
+  const hasLine = (position: 'top' | 'bottom') => {
+    return hasExistingLine(stack.id, position);
+  };
 
-    const animate = () => {
-      const time = (Date.now() / 2000) % 1;
-      floatProgress.set(time);
-      requestAnimationFrame(animate);
-    };
-
-    const animation = requestAnimationFrame(animate);
-    return () => cancelAnimationFrame(animation);
-  }, [floatMode]);
-
-  // Debounce position updates to prevent overwhelming the browser
   const updatePositions = useCallback(() => {
-    console.log('updating positions called', activeComparison);
     if (isUpdatingRef.current) return;
     
     isUpdatingRef.current = true;
-    console.log(`[Stack ${stack.id}] Updating positions, blocks:`, stack.blocks.length);
 
     const updateOnce = () => {
       if (!blocksContainerRef.current) return;
@@ -100,12 +87,50 @@ export function BlockStack({
     });
   }, [stack.id, stack.blocks.length, INTERACTION_ZONE_OFFSET]);
 
+  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, index: number) => {
+    const distanceMoved = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
+    const deleteThreshold = 100;
+
+    if (index === 0 && distanceMoved > deleteThreshold) {
+      setIsExiting(true);
+      exitingBlockRef.current = stack.blocks[0].id;
+      
+      setTimeout(() => {
+        onStackUpdate?.(index);
+        setIsExiting(false);
+        exitingBlockRef.current = null;
+        updatePositions();
+      }, 200);
+    }
+  };
+
+  const handleContainerClick = (e: React.MouseEvent) => {
+    if (mode === 'drawCompare') {
+      const isInteractionZone = (e.target as HTMLElement).classList.contains('interaction-zone');
+      if (!isInteractionZone) {
+        onStackClick?.();
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (floatMode === 'off') return;
+
+    const animate = () => {
+      const time = (Date.now() / 2000) % 1;
+      floatProgress.set(time);
+      requestAnimationFrame(animate);
+    };
+
+    const animation = requestAnimationFrame(animate);
+    return () => cancelAnimationFrame(animation);
+  }, [floatMode]);
+
   useEffect(() => {
     const blockCountChanged = previousBlockCountRef.current !== stack.blocks.length;
     previousBlockCountRef.current = stack.blocks.length;
 
     if (blockCountChanged) {
-      console.log(`[Stack ${stack.id}] Block count changed to:`, stack.blocks.length);
       updatePositions();
     }
   }, [stack.blocks.length, stack.id, updatePositions]);
@@ -131,7 +156,6 @@ export function BlockStack({
       if (hasRelevantChanges) {
         window.clearTimeout(pendingUpdateTimeout);
         pendingUpdateTimeout = window.setTimeout(() => {
-          console.log(`[Stack ${stack.id}] DOM mutation triggered update`);
           updatePositions();
         }, 50);
       }
@@ -152,36 +176,6 @@ export function BlockStack({
       isUpdatingRef.current = false;
     };
   }, [stack.id, blockSize, updatePositions]);
-
-  const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, index: number) => {
-    const distanceMoved = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
-    const deleteThreshold = 100;
-
-    if (index === 0 && distanceMoved > deleteThreshold) {
-      setIsExiting(true);
-      exitingBlockRef.current = stack.blocks[0].id;
-      
-      setTimeout(() => {
-        onStackUpdate?.(index);
-        setIsExiting(false);
-        exitingBlockRef.current = null;
-        updatePositions();
-      }, 200);
-    }
-  };
-
-  const hasLine = (position: 'top' | 'bottom') => {
-    return hasExistingLine(stack.id, position);
-  };
-
-  const handleContainerClick = (e: React.MouseEvent) => {
-    if (mode === 'drawCompare') {
-      const isInteractionZone = (e.target as HTMLElement).classList.contains('interaction-zone');
-      if (!isInteractionZone) {
-        onStackClick?.();
-      }
-    }
-  };
 
   return (
     <div 
@@ -213,7 +207,6 @@ export function BlockStack({
 
         {mode === 'drawCompare' && (!hasLine('top') || !hasLine('bottom')) && (
           <>
-            {/* Define shared class strings */}
             {(() => {
               const baseZoneClasses = `
                 absolute 
@@ -222,7 +215,6 @@ export function BlockStack({
                 before:absolute before:inset-0 before:opacity-90 
                 before:bg-gradient-to-r before:from-transparent before:via-sky-500/5 before:to-transparent
                 after:absolute after:inset-0 after:opacity-90 after:bg-sky-700/40 after:blur-xl
-                transition-all duration-1000 opacity-0 motion-safe:animate-fadeIn
               `;
 
               const innerGlowClasses = `
@@ -233,34 +225,45 @@ export function BlockStack({
               const getHoverClasses = (hasLine: boolean) => 
                 !hasLine ? 'hover:before:opacity-100 hover:after:opacity-100 cursor-crosshair' : '';
 
-              return (['top', 'bottom'] as const).map((position) => {
-                const shouldShowZone = () => {
-                  if (!activeComparison) return !hasLine(position);
-                  if (stack.id === activeComparison.startStack) return false;
-                  return position === activeComparison.startPosition && !hasLine(position);
-                };
+              return ['top', 'bottom'].map((position) => (
+                <AnimatePresence key={position}>
+                  {(() => {
+                    const shouldShowZone = () => {
+                      if (!activeComparison) return !hasLine(position as 'top' | 'bottom');
+                      if (stack.id === activeComparison.startStack) return false;
+                      return position === activeComparison.startPosition && !hasLine(position as 'top' | 'bottom');
+                    };
 
-                if (!shouldShowZone()) return null;
+                    if (!shouldShowZone()) return null;
 
-                return (
-                  <div
-                    key={position}
-                    className={`${baseZoneClasses} ${getHoverClasses(hasLine(position))} group interaction-zone`}
-                    style={{
-                      top: `${zonePositions[position]}px`,
-                      transform: 'translateY(-50%)',
-                    }}
-                    onClick={(e) => {
-                      if (hasLine(position)) return;
-                      e.stopPropagation();
-                      const rect = e.currentTarget.getBoundingClientRect();
-                      onConnectionPoint?.(position, rect.top + rect.height/2);
-                    }}
-                  >
-                    <div className={innerGlowClasses} />
-                  </div>
-                );
-              }).filter(Boolean);
+                    return (
+                      <motion.div
+                        key={`${position}-zone`}
+                        className={`${baseZoneClasses} ${getHoverClasses(hasLine(position as 'top' | 'bottom'))} group interaction-zone`}
+                        style={{
+                          top: `${zonePositions[position as 'top' | 'bottom']}px`,
+                          transform: 'translateY(-50%)',
+                        }}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1 }}
+                        onClick={(e) => {
+                          if (hasLine(position as 'top' | 'bottom')) return;
+                          e.stopPropagation();
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          onConnectionPoint?.(
+                            position as 'top' | 'bottom', 
+                            rect.top + rect.height/2
+                          );
+                        }}
+                      >
+                        <div className={innerGlowClasses} />
+                      </motion.div>
+                    );
+                  })()}
+                </AnimatePresence>
+              ))
             })()}
           </>
         )}

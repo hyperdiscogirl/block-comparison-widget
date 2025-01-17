@@ -40,8 +40,6 @@ export function ComparisonLayer({
     const OFFSET = 12;
     
     const createPath = (startX: number, startY: number, endX: number, endY: number) => {
-      //  M command moves to the start point without drawing
-      //  L command draws a line to the end point
       return `M ${startX} ${startY} L ${endX} ${endY}`;
     };
 
@@ -63,7 +61,6 @@ export function ComparisonLayer({
       return { x, y };
     };
 
-    // Check if we should show the symbol (all lines done animating)
     const showSymbol = comparisonLines.length === 2 && animatingLines.size === 0;
 
     return (

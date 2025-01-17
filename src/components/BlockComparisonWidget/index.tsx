@@ -5,25 +5,23 @@ import { ComparisonLayer } from '../ComparisonLine'
 import type { InteractionMode, BlockStack as BlockStackType } from './types'
 import type { ComparisonLine } from '../ComparisonLine'
 
-export function BlockComparisonWidget() {
-  // randomize the initial stack lengths
-  const generateRandomLengths = () => {
-    const length1 = Math.floor(Math.random() * 6) + 1;  // 1-6
-    let length2;
-    do {
-      length2 = Math.floor(Math.random() * 6) + 1;  // 1-6
-    } while (length2 === length1); 
-    
-    return [length1, length2];
-  };
+const generateRandomLengths = () => {
+  const length1 = Math.floor(Math.random() * 5) + 2; 
+  let length2;
+  do {
+    length2 = Math.floor(Math.random() * 5) + 2;  
+  } while (length2 === length1); 
+  
+  return [length1, length2];
+};
 
+export function BlockComparisonWidget() {
   const [initialStack1Length, initialStack2Length] = generateRandomLengths();
   const totalInitialBlocks = initialStack1Length + initialStack2Length;
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // initialize counter to start after all our initial blocks
+  // core state
   const [blockIdCounter, setBlockIdCounter] = useState(totalInitialBlocks);
-
-  // create our initial stacks with sequential IDs
   const [stacks, setStacks] = useState<BlockStackType[]>([
     { 
       id: 1, 
@@ -44,11 +42,15 @@ export function BlockComparisonWidget() {
       mode: 'label' 
     }
   ]);
-  const [interactionMode, setInteractionMode] = useState<InteractionMode>('addRemove')
+  
+  // ui state
+  const [interactionMode, setInteractionMode] = useState<InteractionMode>('addRemove');
   const [blockSize, setBlockSize] = useState<'sm' | 'lg'>('sm');
   const [floatMode, setFloatMode] = useState<'synced' | 'staggered' | 'off'>('synced');
   const [shimmerEnabled, setShimmerEnabled] = useState(true);
+  const [autoCompare, setAutoCompare] = useState(false);
 
+  // comparison state
   const [comparisonLines, setComparisonLines] = useState<ComparisonLine[]>([]);
   const [activeComparison, setActiveComparison] = useState<{
     startStack: number;
@@ -58,14 +60,13 @@ export function BlockComparisonWidget() {
   } | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   
-  // Track animation states
+  // animation state
   const [lineAnimations, setLineAnimations] = useState<Set<string>>(new Set());
   const [isAnimatingSymbol, setIsAnimatingSymbol] = useState(false);
+  const [hasAnimated, setHasAnimated] = useState(false);
 
-  // reference to container for position calculations
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  // track mouse position during comparison drawing
+  // effects
+  // mouse tracking effect
   useEffect(() => {
     if (!activeComparison) return;
 
@@ -83,13 +84,8 @@ export function BlockComparisonWidget() {
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
   }, [activeComparison]);
-
-  // debug logging
-  console.log('Active comparison:', activeComparison);
-  console.log('Mouse position:', mousePosition);
-  console.log('Comparison lines:', comparisonLines);
-
-  // reset comparison state when switching mode
+  
+  // mode switching effect
   useEffect(() => {
     if (interactionMode === 'addRemove') {
       setComparisonLines([]);
@@ -97,6 +93,48 @@ export function BlockComparisonWidget() {
       setMousePosition(null);
     }
   }, [interactionMode]);
+  
+  // autocomparison effect
+  useEffect(() => {
+    if (!autoCompare || interactionMode !== 'drawCompare') return;
+
+    setComparisonLines([]);
+
+    const topLineId = `auto-comparison-top-${Date.now()}`;
+    const bottomLineId = `auto-comparison-bottom-${Date.now()}`;
+
+    setLineAnimations(new Set([topLineId, bottomLineId]));
+
+    const newLines = [
+      {
+        id: topLineId,
+        startStack: 1,
+        endStack: 2,
+        position: 'top' as const,
+        type: 'auto' as const
+      },
+      {
+        id: bottomLineId,
+        startStack: 1,
+        endStack: 2,
+        position: 'bottom' as const,
+        type: 'auto' as const
+      }
+    ];
+
+    setComparisonLines(newLines);
+  }, [autoCompare, interactionMode]);
+  
+  // animation reset 
+  useEffect(() => {
+    setHasAnimated(false);
+  }, [
+    blockSize, 
+    interactionMode, 
+    shimmerEnabled,
+    stacks.map(stack => stack.blocks.length).join(',') 
+  ]);
+
 
   const hasExistingLine = (stackId: number, position: 'top' | 'bottom') => {
     return comparisonLines.some(line => 
@@ -105,6 +143,8 @@ export function BlockComparisonWidget() {
     );
   };
 
+  // event handlers
+  // stack manipulation handlers
   const handleStackClick = (stackId: number) => {
     if (interactionMode === 'addRemove') {
       // new ID
@@ -143,6 +183,7 @@ export function BlockComparisonWidget() {
     }))
   }
 
+  // comparison handlers
   const handleContainerClick = (e: React.MouseEvent) => {
     // only handle clicks in compare mode and when there's an active comparison
     if (interactionMode === 'drawCompare' && activeComparison) {
@@ -153,42 +194,6 @@ export function BlockComparisonWidget() {
     }
   };
 
-  const [autoCompare, setAutoCompare] = useState(false);
-
-  // auto-comparison
-  useEffect(() => {
-    if (!autoCompare || interactionMode !== 'drawCompare') return;
-
-    // Clear existing comparisons when enabling auto-compare
-    setComparisonLines([]);
-
-    // Create automatic comparisons with unique IDs
-    const topLineId = `auto-comparison-top-${Date.now()}`;
-    const bottomLineId = `auto-comparison-bottom-${Date.now()}`;
-
-    // Add these IDs to the animation tracking set
-    setLineAnimations(new Set([topLineId, bottomLineId]));
-
-    const newLines = [
-      {
-        id: topLineId,
-        startStack: 1,
-        endStack: 2,
-        position: 'top' as const,
-        type: 'auto' as const
-      },
-      {
-        id: bottomLineId,
-        startStack: 1,
-        endStack: 2,
-        position: 'bottom' as const,
-        type: 'auto' as const
-      }
-    ];
-
-    setComparisonLines(newLines);
-  }, [autoCompare, interactionMode]);
-
   const handleLineAnimationComplete = (lineId: string) => {
     setLineAnimations(prev => {
       const next = new Set(prev);
@@ -196,17 +201,24 @@ export function BlockComparisonWidget() {
       return next;
     });
   };
-
+  
+  // animation handlers
   const handleAnimateComparison = () => {
     setIsAnimatingSymbol(true);
+    setHasAnimated(true);
   };
 
   const handleAnimationComplete = () => {
     setIsAnimatingSymbol(false);
   };
 
+  const handleResetComparisons = () => {
+    setComparisonLines([]);
+    setHasAnimated(false);
+  };
+
   return (
-    <div className="w-full flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 xl:w-[80vw] 2xl:w-[70vw] overflow-hidden">
+    <div className="w-full flex flex-col lg:flex-row gap-4 md:gap-6 p-4 md:p-6 lg:p-8 xl:w-[80vw] 2xl:w-[70vw] overflow-hidden relative">
       <div 
         ref={containerRef}
         className="bg-slate-900 rounded-xl p-4 md:p-6 h-[60vh] md:h-[85vh] w-full relative"
@@ -314,11 +326,16 @@ export function BlockComparisonWidget() {
         shimmerEnabled={shimmerEnabled}
         setShimmerEnabled={setShimmerEnabled}
         comparisonLines={comparisonLines}
-        onResetComparisons={() => setComparisonLines([])}
+        onResetComparisons={handleResetComparisons}
         autoCompare={autoCompare}
         setAutoCompare={setAutoCompare}
         handleAnimateComparison={handleAnimateComparison}
+        isAnimating={isAnimatingSymbol}
+        hasAnimated={hasAnimated}
       />
+      <div className="absolute bottom-0 left-1/2 -translate-x-1/2 md:left-8 md:translate-x-0 lg:left-12 text-xs text-slate-500">
+        Made with ♡ by <a href="http://hyperdiscogirl.netlify.app" target="_blank" rel="noopener noreferrer" className="hover:text-slate-300">Disco</a>
+      </div>
     </div>
   )
 }

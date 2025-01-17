@@ -1,24 +1,19 @@
 export function getStackBlockPositions(stackElement: Element | null, offset: number = 12) {
   if (!stackElement) return { top: 0, bottom: 0 };
   
-  // Find all visible blocks in this stack
   const allBlocks = stackElement.querySelectorAll('.flex.items-center.justify-center');
   const blocks = Array.from(allBlocks).filter(block => {
       const style = window.getComputedStyle(block);
-      // Filter out blocks that are:
-      // 1. Invisible
-      // 2. Have zero dimensions
-      // 3. Are positioned far off screen (dragged away)
+      // filter out blocks that might still be in the dom from swiping
       const rect = block.getBoundingClientRect();
       return style.opacity !== '0' && 
              rect.width > 0 && 
              rect.height > 0 && 
-             Math.abs(rect.y) < 10000; // Arbitrary large number to catch off-screen elements
+             Math.abs(rect.y) < 10000; 
   });
 
   if (!blocks.length) return { top: 0, bottom: 0 };
 
-  // Get the first and last block positions from filtered blocks
   const firstBlock = blocks[0];
   const lastBlock = blocks[blocks.length - 1];
   const firstRect = firstBlock.getBoundingClientRect();
@@ -49,7 +44,6 @@ export function getStackPosition(
   const positions = getStackBlockPositions(stackElement, offset);
   const containerRect = container.getBoundingClientRect();
   
-  // Ensure positions are within reasonable bounds
   const y = position === 'top' 
       ? Math.min(positions.top - containerRect.top, containerRect.height)
       : Math.min(positions.bottom - containerRect.top, containerRect.height);

@@ -20,6 +20,8 @@ type ControlPanelProps = {
   autoCompare: boolean
   setAutoCompare: (enabled: boolean) => void
   handleAnimateComparison: () => void
+  isAnimating: boolean
+  hasAnimated: boolean
 }
 
 export function ControlPanel({ 
@@ -39,7 +41,9 @@ export function ControlPanel({
   onResetComparisons,
   autoCompare,
   setAutoCompare,
-  handleAnimateComparison
+  handleAnimateComparison,
+  isAnimating,
+  hasAnimated
 }: ControlPanelProps) {
 const handleSelectChange = (index: number, value: number) => {
     const startingId = blockIdCounter;
@@ -92,9 +96,11 @@ const handleSelectChange = (index: number, value: number) => {
 
   const hasActiveComparisons = comparisonLines.length > 0;
   return (
-    <div className="bg-slate-900 rounded-xl text-sky-100 text-sm p-4 px-20 py-10 lg:py-0 lg:pt-0 lg:p-6 xl:p-12 
-                    lg:h-[85vh] w-full min-h-fit lg:min-h-0 lg:w-[45%] flex flex-col justify-center 
-                    items-center gap-4 overflow-y-auto md:overflow-x-auto overflow-x-hidden">
+    <div className="bg-slate-900 rounded-xl text-sky-100 text-sm p-4 px-4 md:px-20 py-10 
+                    lg:h-[85vh] w-full lg:w-[45%] flex flex-col justify-center 
+                    items-center gap-4 mb-4 md:mb-0
+                     h-auto min-h-fit lg:min-h-0
+                    lg:py-0 lg:pt-0 lg:p-6 xl:p-12">
       <h2 className="font-bold font-mono text-center text-sky-100 whitespace-nowrap flex items-center text-3xl">
         <WrenchIcon 
           className="w-6 h-6 inline-block align-middle mr-2" 
@@ -275,7 +281,7 @@ const handleSelectChange = (index: number, value: number) => {
             </label>
       </div>
       
-        <div className="text-center text-lg font-mono h-20">
+        <div className="text-center text-md font-mono h-20">
           <AnimatePresence mode="wait">
             {comparisonLines.length === 2 ? (
               <motion.div
@@ -296,13 +302,17 @@ const handleSelectChange = (index: number, value: number) => {
                 </button>
                 <button 
                   onClick={handleAnimateComparison}
-                  className="animate-shimmer px-3 py-2 rounded-md
+                  disabled={isAnimating || hasAnimated}
+                  className={`px-3 py-2 rounded-md
                     bg-sky-500 relative overflow-hidden hover:bg-sky-600
                     shadow-sm shadow-sky-100
-                    before:absolute before:inset-0
-                    before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent
-                    before:translate-x-[-150%] before:animate-[shimmer_2s_infinite]
-                    flex items-center gap-2"
+                    ${!hasAnimated ? `
+                      before:absolute before:inset-0
+                      before:bg-gradient-to-r before:from-transparent before:via-white/25 before:to-transparent
+                      before:translate-x-[-150%] before:animate-[shimmer_2s_infinite]
+                    ` : ''}
+                    flex items-center gap-2
+                    disabled:opacity-50 disabled:hover:bg-sky-500`}
                 >
                   <PlayIcon className="w-5 h-5" />
                   Animate

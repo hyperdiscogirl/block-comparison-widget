@@ -32,7 +32,6 @@ interface ComparisonSymbolProps {
         `;
       }
       
-      // Define paths with identical structure for both '>' and '<'
       const leftX = type === '>' ? x-size/2 : x+size/2;
       const rightX = type === '>' ? x+size/2 : x-size/2;
       
@@ -69,16 +68,16 @@ interface ComparisonSymbolProps {
     };
   
     const shouldShowSymbol = isAnimating || (persist && hasAnimated);
+    const shouldGlow = persist || isAnimating;
   
     return (
       <>
         <defs>
           <filter id="glow">
-            <feGaussianBlur stdDeviation="2" result="blur"/>
-            <feFlood floodColor="white" floodOpacity="0.4" result="glow"/>
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feFlood floodColor="white" floodOpacity="0.5" result="glow"/>
             <feComposite in="glow" in2="blur" operator="in" result="softGlow"/>
             <feMerge>
-              <feMergeNode in="softGlow"/>
               <feMergeNode in="softGlow"/>
               <feMergeNode in="SourceGraphic"/>
             </feMerge>
@@ -89,7 +88,7 @@ interface ComparisonSymbolProps {
           initial={{ d: getLinePaths() }}
           animate={{ 
             d: shouldShowSymbol ? getSymbolPath() : getLinePaths(),
-            filter: shouldShowSymbol ? 'url(#glow)' : 'none',
+            filter: shouldShowSymbol ? 'none' : 'url(#glow)',
           }}
           transition={{ 
             duration: 1,
@@ -110,13 +109,13 @@ interface ComparisonSymbolProps {
           strokeLinejoin="round"
         />
 
-        {/* Pulsing overlay */}
+        {/* Pulsing overlay - make it more subtle for the symbol */}
         {isGlowing && (
           <motion.path
             d={getSymbolPath()}
             initial={{ opacity: 0 }}
             animate={{ 
-              opacity: [0, 0.3, 0],
+              opacity: [0, 0.15, 0],
             }}
             transition={{
               duration: 2,
@@ -129,7 +128,7 @@ interface ComparisonSymbolProps {
             strokeLinecap="round"
             strokeLinejoin="round"
             style={{
-              filter: 'url(#glow)',
+              filter: 'none',
               pointerEvents: 'none'
             }}
           />
