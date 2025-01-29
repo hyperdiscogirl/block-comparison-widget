@@ -1,16 +1,14 @@
 import type { BlockStack } from '../BlockComparisonWidget/types'
 import { PlusIcon, MinusIcon, WrenchIcon, InfoIcon, XIcon, PlayIcon } from 'lucide-react'
 import { AnimatePresence, motion } from 'framer-motion'
-import { v4 as uuidv4 } from 'uuid';
-
-// i maybe could have used a context provider instead of passing all these props lol
-// i only passed them one level, though 
 
 type ControlPanelProps = {
   stacks: BlockStack[]
   setStacks: (stacks: BlockStack[]) => void
   mode: 'addRemove' | 'drawCompare'
   setMode: (mode: 'addRemove' | 'drawCompare') => void
+  blockIdCounter: number              
+  setBlockIdCounter: (value: number | ((prev: number) => number)) => void
   blockSize: 'sm' | 'lg'
   setBlockSize: (size: 'sm' | 'lg') => void
   floatMode: 'synced' | 'staggered' | 'off'
@@ -31,6 +29,8 @@ export function ControlPanel({
   setStacks, 
   mode, 
   setMode,
+  blockIdCounter,
+  setBlockIdCounter,
   blockSize,
   setBlockSize,
   floatMode,
@@ -46,13 +46,13 @@ export function ControlPanel({
   hasAnimated
 }: ControlPanelProps) {
 const handleSelectChange = (index: number, value: number) => {
-    // const startingId = blockIdCounter;
+    const startingId = blockIdCounter;
     
     setStacks(stacks.map((stack, i) => {
       if (i === index) {
         // new block ids 
         const newBlocks = Array.from({ length: value }, (_, i) => ({
-          id: uuidv4(),
+          id: `stack${stack.id}-block-${startingId + i}`,
           position: i
         }));
         return { ...stack, blocks: newBlocks }
@@ -61,18 +61,18 @@ const handleSelectChange = (index: number, value: number) => {
     }));
   
     // update counter once after generating all blocks
-    // setBlockIdCounter(startingId + value);
+    setBlockIdCounter(startingId + value);
   }
   
 
   const updateBlocks = (index: number, increment: boolean) => {
     if (increment) {
-      const newBlockId = uuidv4();
+      const newBlockId = blockIdCounter;
       
       setStacks(stacks.map((stack, i) => {
         if (i === index && stack.blocks.length < 10) {
           const newBlock = {
-            id: newBlockId,
+            id: `stack${stack.id}-block-${newBlockId}`,
             position: stack.blocks.length
           }
           return {
@@ -84,7 +84,7 @@ const handleSelectChange = (index: number, value: number) => {
       }));
   
       // update counter after using the ID
-      // setBlockIdCounter(newBlockId + 1);
+      setBlockIdCounter(newBlockId + 1);
     } else {
       setStacks(stacks.map((stack, i) => 
         i === index && stack.blocks.length > 1 
@@ -110,11 +110,11 @@ const handleSelectChange = (index: number, value: number) => {
       </h2>
       <div className="flex min-w-fit justify-center gap-5 text-sky-400">
         {stacks.map((stack, index) => (
-          <div key={stack.id} className="flex flex-col gap-4">
+          <div key={stack.id} className="flex flex-col items-center gap-4">
             <select 
               value={stack.blocks.length} 
               onChange={(e) => handleSelectChange(index, parseInt(e.target.value))}
-              className="bg-slate-700 text-white p-2 rounded-md text-2xl w-full text-center pl-4"
+              className="bg-slate-700 text-white p-2 rounded-md text-2xl text-center pl-4 w-full"
               disabled={mode === 'drawCompare'}
             >
               {Array.from({ length: 10 }, (_, i) => i + 1).map(num => (
@@ -282,9 +282,7 @@ const handleSelectChange = (index: number, value: number) => {
       </div>
       
         <div className="text-center text-md font-mono h-20">
-          {/* mode=wait allows smooth transitions betwenn elements & their anims */}
           <AnimatePresence mode="wait">
-            {/* checks if comparison lines are done to enable reset/animate button */}
             {comparisonLines.length === 2 ? (
               <motion.div
                 key="comparison-controls"
