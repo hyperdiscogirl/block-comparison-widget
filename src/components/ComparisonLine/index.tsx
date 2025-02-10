@@ -1,6 +1,9 @@
 import { motion } from 'framer-motion';
 import { getStackBlockPositions } from '../../utils/stackPositioning';
 import { ComparisonSymbol } from '../ComparisonSymbol';
+
+
+//oh no, duplicate type (with different attributes...) than in /types
 export interface ComparisonLine {
   id: string;
   startStack: number;
@@ -26,41 +29,48 @@ interface ComparisonLayerProps {
   animatingLines: Set<string>;
 }
 
+// Manages comparison lines and symbol
 export function ComparisonLayer({ 
-    comparisonLines, 
-    activeComparison, 
-    mousePosition,
-    containerRef,
-    isAnimating = false,
-    stackSizes,
-    onAnimationComplete,
-    onLineAnimationComplete,
-    animatingLines
+    comparisonLines, // completed lines
+    activeComparison, // currently being drawn line
+    mousePosition, // track active drawing
+    containerRef, // parent ref
+    isAnimating = false, // flag for animation state
+    stackSizes, // stack sizes
+    onAnimationComplete, // callback for animation completion
+    onLineAnimationComplete, // callback for line animation completion
+    animatingLines // set of animating lines
   }: ComparisonLayerProps) {
+    // offset - const, shifts lines slightly up and down
     const OFFSET = 12;
-    
+
+    // create svg path string 
     const createPath = (startX: number, startY: number, endX: number, endY: number) => {
       return `M ${startX} ${startY} L ${endX} ${endY}`;
     };
 
+    // get stack position - calculates the position of a stack element for linend points
     const getStackPosition = (stackIndex: number, position: 'top' | 'bottom') => {
       if (!containerRef.current) return { x: 0, y: 0 };
       
       const container = containerRef.current;
       const containerWidth = container.clientWidth;
+      // div container into thirds for horizontal position
       const x = (containerWidth / 3) * (stackIndex + 1);
       
+      // find stack elment and calculate positions
       const stackElement = container.querySelectorAll('.relative.flex-grow')[stackIndex];
       const positions = getStackBlockPositions(stackElement, OFFSET);
       const containerRect = container.getBoundingClientRect();
       
+      // convert to container - relative coords 
       const y = position === 'top' 
         ? positions.top - containerRect.top 
         : positions.bottom - containerRect.top;
-      
       return { x, y };
     };
 
+    // show symbol only when 2 lines drawn , animatinos done
     const showSymbol = comparisonLines.length === 2 && animatingLines.size === 0;
 
     return (
@@ -72,7 +82,7 @@ export function ComparisonLayer({
           height: '100%'
         }}
       >
-        {/* Lines fade out when symbol appears */}
+        {/* lines render completed comparison lines */}
         {comparisonLines.map(line => {
           const start = getStackPosition(line.startStack - 1, line.position);
           const end = getStackPosition(line.endStack - 1, line.position);
@@ -88,6 +98,7 @@ export function ComparisonLayer({
               style={{
                 filter: 'drop-shadow(0 0 4px rgba(255, 255, 255, 0.7))',
               }}
+              //line drawing animation 
               initial={isAnimating ? { pathLength: 0, opacity: 1 } : { pathLength: 1, opacity: 1 }}
               animate={{ 
                 pathLength: 1,
@@ -106,20 +117,23 @@ export function ComparisonLayer({
           );
         })}
 
-        {/* Show symbol when lines are done */}
+        {/* render comparison symbol when lines done */}
         {showSymbol && (
           <ComparisonSymbol
+          // determine symbol based on stack sizes (could pull this fn out)
             type={(() => {
               const stack1Size = stackSizes[1];
               const stack2Size = stackSizes[2];
               if (stack1Size === stack2Size) return '=';
               return stack1Size < stack2Size ? '<' : '>';
             })()}
+            // center 
             position={{
               x: (getStackPosition(0, 'top').x + getStackPosition(1, 'top').x) / 2,
               y: (getStackPosition(0, 'top').y + getStackPosition(1, 'bottom').y) / 2
             }}
             isAnimating={isAnimating}
+            // positions for morphin animations
             linePositions={{
               topStart: getStackPosition(0, 'top'),
               topEnd: getStackPosition(1, 'top'),
@@ -131,7 +145,7 @@ export function ComparisonLayer({
           />
         )}
 
-        {/* Active drawing line */}
+        {/* render dashed active drawing line */}
         {activeComparison && mousePosition && containerRef.current && (
           <motion.path
             d={createPath(

@@ -17,6 +17,8 @@ export interface Block {
     position: number;
   }
   
+
+// ruh oh, I'm not even using like any of these properties!! i def should have refactored this 
 export interface BlockStack {
 id: number;
 blocks: Block[]; 

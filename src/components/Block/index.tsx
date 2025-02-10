@@ -16,6 +16,7 @@ interface BlockProps {
   shimmerEnabled: boolean;
 }
 
+//needed here because motion components need access to dom elements to apply animations
 export const Block = forwardRef<HTMLDivElement, BlockProps>(({
   index,
   totalBlocks,
@@ -39,12 +40,13 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
     return () => clearTimeout(timer);
   }, [mode, size, shimmerEnabled]);
 
-  // staggered animation effect
+  //  block float animation 
   const offsetProgress = useMotionValue(0)
   
   useEffect(() => {
     if (floatMode === 'off') return;
 
+    // listens for changes in floatProgress motion value
     const unsubscribe = floatProgress.on('change', (latest) => {
       const offset = floatMode === 'staggered'
         ? (latest + (index * 0.2)) % 1  // staggered effect
@@ -93,8 +95,10 @@ export const Block = forwardRef<HTMLDivElement, BlockProps>(({
         y: dragY,
         translateY: floatY
       }}
+      // works with animate presence in parent component
       exit={{ opacity: 0, scale: 0.8, zIndex: totalBlocks - index - 1}}
       initial={{ opacity: 0, scale: 0.8 }}
+      // css filters  - maybe should look to idiomatic framer motion functionality for this
       animate={{ 
         opacity: 1, 
         scale: 1,

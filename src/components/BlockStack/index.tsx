@@ -33,21 +33,41 @@ export function BlockStack({
   activeComparison,
   hasExistingLine
 }: BlockStackProps) {
-  const blocksContainerRef = useRef<HTMLDivElement>(null);
-  const isUpdatingRef = useRef(false);
-  const exitingBlockRef = useRef<string | null>(null);
-  const previousBlockCountRef = useRef(stack.blocks.length);
-  const INTERACTION_ZONE_OFFSET = 12;
+  // ok i have a lot of refs here !
+  // they have kind of distinct use cases, but might be worth verifying these are all necessary 
+  // REFRESH: a ref is a direct reference to a DOM element or value (like document.getElementById in html)
+  // it persists across re-renders, so it kind of bypasses react's usual state management flow (declarative - describing what you want vs imperative - directly manipulating what is)
+  // maintaining a stable pointer to something that might change]
 
+  // dom reference - tracks the container div - not something react manages well
+  const blocksContainerRef = useRef<HTMLDivElement>(null);
+  // prevents concurrent updates wo triggering more updates
+  const isUpdatingRef = useRef(false);
+  // tracks the id of a block being removed, to render not draggable while animating out
+  const exitingBlockRef = useRef<string | null>(null);
+  // tracks the prev number of blocks in the stack
+  const previousBlockCountRef = useRef(stack.blocks.length);
+
+
+  // offset for the interaction zones
+  const INTERACTION_ZONE_OFFSET = 12;
+  // state for the positions of the interaction zones
   const [zonePositions, setZonePositions] = useState({ top: 0, bottom: 0 });
+  // state for whether a block is in the process of animating out
   const [isExiting, setIsExiting] = useState(false);
+  // framer motion hook creates value that can animate smooothly w/o causing re-renders
+  // passed down to block component to synchronize float animation
   const floatProgress = useMotionValue(0);
 
+  // checks if there is an existing line at a given position
   const hasLine = (position: 'top' | 'bottom') => {
     return hasExistingLine(stack.id, position);
   };
 
+  // updates the positions of the blocks in the stack so we can update the interaction zones positions
+  // after layout changes
   const updatePositions = useCallback(() => {
+    // prevents concurrent updates
     if (isUpdatingRef.current) return;
     
     isUpdatingRef.current = true;
@@ -57,6 +77,7 @@ export function BlockStack({
 
       try {
         const positions = getStackBlockPositions(blocksContainerRef.current, INTERACTION_ZONE_OFFSET);
+        // dom api method returning domrect opject with info abt the element's dimensions 
         const containerRect = blocksContainerRef.current.getBoundingClientRect();
 
         setZonePositions(prev => {
@@ -78,6 +99,10 @@ export function BlockStack({
       }
     };
 
+    //  rAF - browser API that schedules a callback to run before next browsser repaint 
+    // synch updates with browsr's render cycle
+    // double update with delay ensures that final positions are correct 
+    // tbh, i am not sure this is necesssary or optimal, but i recall having issues with the positions not updating aggressively enough 
     requestAnimationFrame(() => {
       updateOnce();
       setTimeout(() => {
@@ -87,6 +112,8 @@ export function BlockStack({
     });
   }, [stack.id, stack.blocks.length, INTERACTION_ZONE_OFFSET]);
 
+
+  // handles the event when a block is dragged and released
   const handleDragEnd = (_event: MouseEvent | TouchEvent | PointerEvent, info: PanInfo, index: number) => {
     const distanceMoved = Math.sqrt(info.offset.x ** 2 + info.offset.y ** 2);
     const deleteThreshold = 100;
@@ -95,6 +122,8 @@ export function BlockStack({
       setIsExiting(true);
       exitingBlockRef.current = stack.blocks[0].id;
       
+      // the purpose of this (isExiting and timeout) was to make it so the block isnt draggable 
+      // while animating out  - but rn not actually sure the timeout is needed
       setTimeout(() => {
         onStackUpdate?.(index);
         setIsExiting(false);
@@ -104,6 +133,7 @@ export function BlockStack({
     }
   };
 
+  // trigger on stackclick to remove comparison if not in interaction zone 
   const handleContainerClick = (e: React.MouseEvent) => {
     if (mode === 'drawCompare') {
       const isInteractionZone = (e.target as HTMLElement).classList.contains('interaction-zone');
@@ -113,19 +143,26 @@ export function BlockStack({
     }
   };
 
+  // float animation timing - passed down to block component to synchronize float animation
   useEffect(() => {
     if (floatMode === 'off') return;
 
+    //hmm, i think i used this because it's a pattern ive seen before
+    // but maybe i should check framer motion functionalities for this, for consistency 
     const animate = () => {
+      // calculation enables a smooth loop over 2s
       const time = (Date.now() / 2000) % 1;
       floatProgress.set(time);
+      // schedule next frame
       requestAnimationFrame(animate);
     };
 
+    // start the animation loop
     const animation = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(animation);
   }, [floatMode]);
 
+  // watch for block count changes 
   useEffect(() => {
     const blockCountChanged = previousBlockCountRef.current !== stack.blocks.length;
     previousBlockCountRef.current = stack.blocks.length;
@@ -135,15 +172,18 @@ export function BlockStack({
     }
   }, [stack.blocks.length, stack.id, updatePositions]);
 
+  // watch for setting/mode changes 
   useEffect(() => {
     updatePositions();
   }, [blockSize, floatMode, mode, updatePositions]);
 
+  // watch for DOM changes (maybe i could have combined these all into one useEffect)
   useEffect(() => {
     if (!blocksContainerRef.current) return;
 
     let pendingUpdateTimeout: number;
 
+    // listens for dom changes, mb more efficient than polling 
     const observer = new MutationObserver((mutations) => {
       if (isUpdatingRef.current) return;
 
@@ -153,6 +193,7 @@ export function BlockStack({
          (mutation.attributeName === 'style' || mutation.attributeName === 'class'))
       );
 
+      // debounce to prevent too many updates from rapid changes
       if (hasRelevantChanges) {
         window.clearTimeout(pendingUpdateTimeout);
         pendingUpdateTimeout = window.setTimeout(() => {
@@ -187,6 +228,11 @@ export function BlockStack({
         ref={blocksContainerRef}
         className="relative flex-grow flex flex-col items-center justify-center"
       >
+        {/* 
+        framer motion component that allows animations for elemnst that are mounting/unmounting
+        popLayout - prevent layout shift when animating out
+        initial={false} - dont animate the first render
+        */}
         <AnimatePresence mode="popLayout" initial={false}>
           {stack.blocks.map((block, index) => (
             <BlockComponent
@@ -208,6 +254,9 @@ export function BlockStack({
         {mode === 'drawCompare' && (!hasLine('top') || !hasLine('bottom')) && (
           <>
             {(() => {
+              // lol, i should have def pulled this out of the render loop
+              //especially since they are NESTED iifes
+              // define shared styles for top & bottom zones 
               const baseZoneClasses = `
                 absolute 
                 ${blockSize === 'lg' ? 'h-24 w-24' : 'h-16 w-16'}

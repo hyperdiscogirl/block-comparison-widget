@@ -1,5 +1,6 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
+
 interface ComparisonSymbolProps {
     type: '>' | '<' | '=';
     position: { x: number; y: number };
@@ -43,6 +44,7 @@ interface ComparisonSymbolProps {
       `;
     };
   
+    // generate paths for inital lines state
     const getLinePaths = () => {
       if (type === '=') {
         return `
@@ -53,7 +55,7 @@ interface ComparisonSymbolProps {
         `;
       }
   
-      // For '<', swap start and end points to match the final symbol structure
+      // for '<', swap start and end points to match the final symbol structure
       const start = type === '>' ? linePositions.topStart : linePositions.topEnd;
       const end = type === '>' ? linePositions.topEnd : linePositions.topStart;
       const bottomStart = type === '>' ? linePositions.bottomStart : linePositions.bottomEnd;
@@ -72,6 +74,9 @@ interface ComparisonSymbolProps {
     return (
       <>
         <defs>
+          {/* 
+          subtle gaussian blur glow effect
+          */}
           <filter id="glow">
             <feGaussianBlur stdDeviation="5" result="blur"/>
             <feFlood floodColor="white" floodOpacity="0.5" result="glow"/>
@@ -83,6 +88,9 @@ interface ComparisonSymbolProps {
           </filter>
         </defs>
 
+        {/* 
+        main symbol path that morphs from lines 
+        */}
         <motion.path
           initial={{ d: getLinePaths() }}
           animate={{ 

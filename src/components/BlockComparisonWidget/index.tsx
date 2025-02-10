@@ -4,7 +4,10 @@ import { ControlPanel } from '../ControlPanel'
 import { ComparisonLayer } from '../ComparisonLine'
 import type { InteractionMode, BlockStack as BlockStackType } from './types'
 import type { ComparisonLine } from '../ComparisonLine'
+import { v4 as uuidv4 } from 'uuid'
 
+// i did it with a custom function cuz i wanted the numbers to specifically be in the range of 2-6 and not the same
+// reminder - math.random() returns a number between 0 and 1 , so we multiply it by 5 and round down, + 2 to raise eceilig/floor
 const generateRandomLengths = () => {
   const length1 = Math.floor(Math.random() * 5) + 2; 
   let length2;
@@ -15,18 +18,25 @@ const generateRandomLengths = () => {
   return [length1, length2];
 };
 
+// const generateInitialStacks = () => {
+//   
+// }
+
 export function BlockComparisonWidget() {
+  // im not doing anything with this state except using it when i create the blocks 
+  // so i should just make like a generateInitialStacks function 
   const [initialStack1Length, initialStack2Length] = generateRandomLengths();
-  const totalInitialBlocks = initialStack1Length + initialStack2Length;
+  // const totalInitialBlocks = initialStack1Length + initialStack2Length;
   const containerRef = useRef<HTMLDivElement>(null);
 
   // core state
-  const [blockIdCounter, setBlockIdCounter] = useState(totalInitialBlocks);
+  // const [blockIdCounter, setBlockIdCounter] = useState(totalInitialBlocks);
+  // this is way ugly and would be simpler if i removed those uncessary attributes from the type 
   const [stacks, setStacks] = useState<BlockStackType[]>([
     { 
       id: 1, 
       blocks: Array.from({ length: initialStack1Length }, (_, i) => ({ 
-        id: `stack1-block-${i}`, 
+        id: uuidv4(), 
         position: i 
       })), 
       value: 2, 
@@ -35,7 +45,7 @@ export function BlockComparisonWidget() {
     { 
       id: 2, 
       blocks: Array.from({ length: initialStack2Length }, (_, i) => ({ 
-        id: `stack2-block-${i + initialStack1Length}`, 
+        id: uuidv4(), 
         position: i 
       })), 
       value: 4, 
@@ -43,6 +53,8 @@ export function BlockComparisonWidget() {
     }
   ]);
   
+  // could have used a context provider or global state 
+  // NOT a hook despite andrew's suggestion - these states are shared, coordinates the app 
   // ui state
   const [interactionMode, setInteractionMode] = useState<InteractionMode>('addRemove');
   const [blockSize, setBlockSize] = useState<'sm' | 'lg'>('sm');
@@ -73,6 +85,7 @@ export function BlockComparisonWidget() {
     const handleMouseMove = (e: MouseEvent) => {
       // get position relative to container
       if (containerRef.current) {
+        // domrect object to get the position of the container
         const rect = containerRef.current.getBoundingClientRect();
         setMousePosition({
           x: e.clientX - rect.left,
@@ -94,7 +107,8 @@ export function BlockComparisonWidget() {
     }
   }, [interactionMode]);
   
-  // autocomparison effect
+  // initualize autocomparison effect 
+  // tbh, i wish i made this effect triggered by a button isntead of listening for changes in the mode
   useEffect(() => {
     if (!autoCompare || interactionMode !== 'drawCompare') return;
 
@@ -135,6 +149,7 @@ export function BlockComparisonWidget() {
   ]);
 
 
+  // checks if there is an existing line at a given position, used for show/hide interaction zones in BS
   const hasExistingLine = (stackId: number, position: 'top' | 'bottom') => {
     return comparisonLines.some(line => 
       (line.startStack === stackId || line.endStack === stackId) && 
@@ -144,16 +159,17 @@ export function BlockComparisonWidget() {
 
   // event handlers
   // stack manipulation handlers
+  // add new block when stack is double clicked
   const handleStackClick = (stackId: number) => {
     if (interactionMode === 'addRemove') {
       // new ID
-      const newBlockId = blockIdCounter;
+      const newBlockId = uuidv4();
       
       // new block
       setStacks(stacks.map(stack => {
         if (stack.id === stackId && stack.blocks.length < 10) {
           const newBlock = {
-            id: `stack${stackId}-block-${newBlockId}`,
+            id: newBlockId,
             position: stack.blocks.length
           }
           return {
@@ -164,10 +180,11 @@ export function BlockComparisonWidget() {
         return stack
       }));
   
-      setBlockIdCounter(newBlockId + 1);
+      // setBlockIdCounter(newBlockId + 1);
     }
   }
 
+  // handles stack removing when dragging
   const handleStackUpdate = (stackId: number, removeIndex: number) => {
     setStacks(stacks.map(stack => {
       if (stack.id === stackId) {
@@ -181,6 +198,7 @@ export function BlockComparisonWidget() {
   }
 
   // comparison handlers
+  // ends the existing comparison when user clicks off (on the container, stack handled in onStackClick)
   const handleContainerClick = (e: React.MouseEvent) => {
     if (interactionMode === 'drawCompare' && activeComparison) {
       if (e.target === e.currentTarget) {
@@ -190,6 +208,8 @@ export function BlockComparisonWidget() {
     }
   };
 
+
+  // when a line animation completes, remove the line id from the set of animating lines
   const handleLineAnimationComplete = (lineId: string) => {
     setLineAnimations(prev => {
       const next = new Set(prev);
@@ -228,7 +248,9 @@ export function BlockComparisonWidget() {
             <BlockStack
               key={stack.id}
               stack={stack}
+              //hahah why did i make this an inline function 
               onStackClick={() => {
+                // this ends the existing comparison when user clicks off (on a stack)
                 if (interactionMode === 'drawCompare' && activeComparison) {
                   setActiveComparison(null);
                   setMousePosition(null);
@@ -241,27 +263,34 @@ export function BlockComparisonWidget() {
               blockSize={blockSize}
               floatMode={floatMode}
               shimmerEnabled={shimmerEnabled}
+              // woww this definitely should be pulled out into a separate function geez
+              // better called handleComparisonLineConnection or something
+              // event handler for clicking on an interaction zone
               onConnectionPoint={(position, y) => {
                 if (interactionMode !== 'drawCompare') return;
-                
                 if (hasExistingLine(stack.id, position)) return;
 
+                // start new active comparison if none 
                 if (!activeComparison) {
+                  // get containers dimensions for accurate positioning
                     const rect = containerRef.current?.getBoundingClientRect();
                     if (!rect) return;
                     
                     const startX = (rect.width / 3) * stack.id;
                     
+                    // starting point of the comparison
                     setActiveComparison({
                         startStack: stack.id,
                         startPosition: position,
                         startY: y,
                         startX: startX
                     });
+                    // set mouse position to the starting point of the comparison
                     setMousePosition({
                         x: startX,
                         y: y
                     });
+                // alternate case - compelting active comparison (click on other stack)
                 } else if (
                     activeComparison.startStack !== stack.id && 
                     activeComparison.startPosition === position &&
@@ -277,6 +306,8 @@ export function BlockComparisonWidget() {
                         position,
                         type: 'student'
                     }]);
+
+                    // reset active comparison (line complete)
                     setActiveComparison(null);
                     setMousePosition(null);
                 }
@@ -312,8 +343,6 @@ export function BlockComparisonWidget() {
         setMode={setInteractionMode}
         blockSize={blockSize}
         setBlockSize={setBlockSize}
-        blockIdCounter={blockIdCounter}
-        setBlockIdCounter={setBlockIdCounter}
         floatMode={floatMode}
         setFloatMode={setFloatMode}
         shimmerEnabled={shimmerEnabled}

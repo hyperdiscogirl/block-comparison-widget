@@ -50,3 +50,7 @@ export function getStackPosition(
   
   return { x, y };
 }
+
+//energetically expensive calculations
+// optimization possiblities - throttling to limit updates
+// memoization to cache results for repeated calculations
